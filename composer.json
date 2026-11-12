@@ -1,0 +1,87 @@
+{
+    "name": "phoenix1331/laravel-clorian",
+    "description": "Confidence-aware typed decisions for Laravel models and input: let Jev make the obvious calls, send the unsure ones to a human, and measure when to trust it more.",
+    "keywords": [
+        "laravel",
+        "jev",
+        "typesafe",
+        "ai",
+        "decisions",
+        "triage",
+        "classification",
+        "confidence",
+        "thresholds",
+        "human-in-the-loop",
+        "calibration",
+        "review-queue"
+    ],
+    "homepage": "https://phoenix1331.github.io/laravel-clorian",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Darren Williams",
+            "homepage": "https://github.com/phoenix1331"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/phoenix1331/laravel-clorian/issues",
+        "source": "https://github.com/phoenix1331/laravel-clorian"
+    },
+    "require": {
+        "php": "^8.3",
+        "illuminate/contracts": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.13",
+        "laravel/pint": "^1.32",
+        "orchestra/testbench": "^10.6|^11.3",
+        "pestphp/pest": "^4.1|^5.3",
+        "pestphp/pest-plugin-laravel": "^4.0|^5.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Phoenix1331\\Clorian\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Phoenix1331\\Clorian\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Phoenix1331\\Clorian\\ClorianServiceProvider"
+            ]
+        }
+    },
+    "scripts": {
+        "lint": "pint",
+        "lint:test": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "test": "pest",
+        "test:coverage": "pest --coverage --min=90",
+        "check": [
+            "@lint:test",
+            "@analyse",
+            "@test:coverage"
+        ]
+    },
+    "scripts-descriptions": {
+        "lint": "Fix code style with Pint",
+        "lint:test": "Check code style with Pint without changing files",
+        "analyse": "Run Larastan at max level",
+        "test": "Run the Pest suite",
+        "test:coverage": "Run the Pest suite with the 90% coverage gate on src/",
+        "check": "Run style check, static analysis and the coverage gate, in that order"
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

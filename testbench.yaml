@@ -1,0 +1,7 @@
+# Lets vendor/bin/testbench run package commands against a throwaway app.
+providers:
+  - Phoenix1331\Clorian\ClorianServiceProvider
+
+# Uncomment once the package ships migrations.
+# migrations:
+#   - database/migrations
