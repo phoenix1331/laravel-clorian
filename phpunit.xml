@@ -23,6 +23,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_KEY" value="base64:rQGtEfAmS0uoJphc8F6pnGTWmnCwpT4iibDyWNCxLek="/>
         <env name="CACHE_STORE" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="DB_CONNECTION" value="sqlite"/>

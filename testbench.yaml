@@ -2,6 +2,6 @@
 providers:
   - Phoenix1331\Clorian\ClorianServiceProvider
 
-# Uncomment once the package ships migrations.
-# migrations:
-#   - database/migrations
+# Package migrations, loaded by vendor/bin/testbench migrate.
+migrations:
+  - database/migrations

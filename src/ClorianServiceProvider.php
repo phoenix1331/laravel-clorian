@@ -18,5 +18,9 @@ class ClorianServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../config/clorian.php' => config_path('clorian.php'),
         ], 'clorian-config');
+
+        $this->publishesMigrations([
+            __DIR__.'/../database/migrations' => database_path('migrations'),
+        ], 'clorian-migrations');
     }
 }
