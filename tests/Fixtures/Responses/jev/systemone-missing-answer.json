@@ -1,0 +1,24 @@
+{
+    "model": "jev-1.14.0",
+    "answers": {
+        "category": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 1,
+            "probabilities": {
+                "billing": 1,
+                "bug": 0,
+                "account": 0,
+                "feature": 0
+            }
+        },
+        "urgency": {
+            "type": "noul",
+            "noul": 0.5
+        }
+    },
+    "usage": {
+        "input_tokens": 443,
+        "output_tokens": 107
+    }
+}

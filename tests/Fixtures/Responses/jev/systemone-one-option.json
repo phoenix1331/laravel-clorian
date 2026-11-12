@@ -1,0 +1,17 @@
+{
+    "model": "jev-1.14.0",
+    "answers": {
+        "q": {
+            "type": "choice",
+            "choice": "billing",
+            "confidence": 1,
+            "probabilities": {
+                "billing": 1
+            }
+        }
+    },
+    "usage": {
+        "input_tokens": 274,
+        "output_tokens": 24
+    }
+}

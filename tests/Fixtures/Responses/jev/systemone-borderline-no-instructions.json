@@ -1,0 +1,35 @@
+{
+    "model": "jev-1.14.0",
+    "answers": {
+        "category": {
+            "type": "choice",
+            "choice": "bug",
+            "confidence": 0.91,
+            "probabilities": {
+                "billing": 0.05,
+                "bug": 0.93,
+                "account": 0.01,
+                "feature": 0.01
+            }
+        },
+        "urgency": {
+            "type": "choice",
+            "choice": "high",
+            "confidence": 0.33,
+            "probabilities": {
+                "low": 0.15,
+                "normal": 0.27,
+                "high": 0.5,
+                "critical": 0.08
+            }
+        },
+        "needs_human": {
+            "type": "noul",
+            "noul": 0.74
+        }
+    },
+    "usage": {
+        "input_tokens": 382,
+        "output_tokens": 107
+    }
+}
