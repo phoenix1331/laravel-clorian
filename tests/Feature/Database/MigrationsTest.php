@@ -24,7 +24,7 @@ function clorianMigrations(): array
     return array_map(static fn (string $file): Migration => require $file, $files);
 }
 
-it('creates the three tables with the brief\'s columns', function (): void {
+it('creates the three tables with their columns', function (): void {
     expect(Schema::getColumnListing('clorian_weighings'))->toEqualCanonicalizing([
         'id', 'subject_type', 'subject_id', 'policy', 'model_version', 'driver', 'status',
         'content_hash', 'input', 'error', 'meta', 'created_at', 'updated_at',

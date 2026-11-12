@@ -13,31 +13,39 @@ use InvalidArgumentException;
  */
 final class InvalidThresholds extends InvalidArgumentException
 {
-    public function __construct(
-        string $reason,
+    private function __construct(
+        string $message,
         public readonly string $policy,
         public readonly ?string $question = null,
         public readonly ?string $option = null,
     ) {
-        parent::__construct(sprintf('Invalid %s: %s.', self::location($policy, $question, $option), $reason));
+        parent::__construct($message);
     }
 
     public static function forPolicy(string $policy, string $reason): self
     {
-        return new self($reason, $policy);
+        return new self(self::message($reason, $policy), $policy);
     }
 
     public static function forQuestion(string $policy, string $question, string $reason): self
     {
-        return new self($reason, $policy, $question);
+        return new self(self::message($reason, $policy, $question), $policy, $question);
     }
 
     public static function forOption(string $policy, string $question, string $option, string $reason): self
     {
-        return new self($reason, $policy, $question, $option);
+        return new self(self::message($reason, $policy, $question, $option), $policy, $question, $option);
     }
 
-    private static function location(string $policy, ?string $question, ?string $option): string
+    /**
+     * The defaults in config/clorian.php are wrong, so no policy can be used.
+     */
+    public static function inConfig(string $key, string $reason): self
+    {
+        return new self(sprintf('Invalid config [%s]: %s.', $key, $reason), '');
+    }
+
+    private static function message(string $reason, string $policy, ?string $question = null, ?string $option = null): string
     {
         $location = "policy [{$policy}]";
 
@@ -49,6 +57,6 @@ final class InvalidThresholds extends InvalidArgumentException
             $location .= ", option [{$option}]";
         }
 
-        return $location;
+        return sprintf('Invalid %s: %s.', $location, $reason);
     }
 }

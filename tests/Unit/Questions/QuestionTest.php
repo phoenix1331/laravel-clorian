@@ -51,7 +51,7 @@ describe('choice', function (): void {
             ->toBe('Which team handles `content`?');
     });
 
-    it('validates the brief\'s triage questions', function (): void {
+    it('validates the ticket triage questions', function (): void {
         urgency()->validate(POLICY, defaults());
         Question::choice('category', ['billing', 'bug', 'account', 'feature'])->validate(POLICY, defaults());
     })->throwsNoExceptions();
@@ -158,7 +158,7 @@ describe('thresholds', function (): void {
             ->and($question->thresholdsFor('no', defaults()))->toEqual(new Thresholds(0.95, 0.6));
     });
 
-    it('applies the brief\'s urgency overrides', function (): void {
+    it('applies the urgency overrides', function (): void {
         expect(urgency()->thresholdsFor('critical', defaults()))->toEqual(Thresholds::alwaysReview(0.6))
             ->and(urgency()->thresholdsFor('low', defaults()))->toEqual(new Thresholds(0.75, 0.6))
             ->and(urgency()->thresholdsFor('high', defaults()))->toEqual(new Thresholds(0.9, 0.6));

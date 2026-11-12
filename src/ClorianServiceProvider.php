@@ -5,12 +5,15 @@ declare(strict_types=1);
 namespace Phoenix1331\Clorian;
 
 use Illuminate\Support\ServiceProvider;
+use Phoenix1331\Clorian\Policies\PolicyRegistry;
 
 class ClorianServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/clorian.php', 'clorian');
+
+        $this->app->singleton(PolicyRegistry::class);
     }
 
     public function boot(): void
