@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FakeDriver` for tests and offline demos: `answer()`, `distribution()`, `using()`, `fail()`, recorded `calls()`, even spread for unscripted questions
 - `JevDriver`: scores every question in one `POST /systemone` call, maps booleans to `true`/`false`, records the resolved model version, latency, tokens and request id, trims input to `max_context_tokens` (context first), and turns timeouts, rate limits and error responses into `DriverException`s without the key or the content sent
 - `drivers.jev.max_context_tokens` config key (default 24000) and a `truncated` flag on `Scores`
+- `Clorian::now(policy, input, ?model)`: weighs in one driver call, stores the weighing and every answer with the thresholds in force, and runs `apply()` with only accepted answers over the defaults; any driver failure or `sync_timeout` stores a failed weighing and applies the defaults, so the caller is never blocked
+- `Clorian::driver()` resolves `clorian.driver` (`jev`, `fake` or your own through `Clorian::extend()`), and the `Clorian` facade
+- `Weighing::accepted(question, value)`: true for an accepted answer, or for the value a human confirmed or corrected
 - `ThresholdResolver`: turns scores into an `Answer` per question (option, value, confidence, scores, thresholds in force, status), with threshold precedence tuned option, tuned question, policy option, policy question, config default; equality counts as reaching a threshold
 - `ResolvedAnswers` with property access, `accepted()`, `needingReview()`, `withStatus()` and `values(defaults)`, the accepted values over the policy defaults for `apply()`
 - `TunedThresholds` lookup contract, with `EloquentTunedThresholds` reading `clorian_thresholds` in one query and `NoTunedThresholds` for code without a database
