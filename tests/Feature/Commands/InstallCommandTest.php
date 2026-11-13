@@ -90,3 +90,46 @@ it('never overwrites a published config', function (): void {
 
     expect((string) file_get_contents($this->installDir.'/config/clorian.php'))->toContain("'mine' => true");
 });
+
+it('publishes the migrations once, however often it runs', function (): void {
+    $this->artisan('clorian:install', ['--no-interaction' => true])
+        ->expectsOutputToContain('Published 3 migrations')
+        ->assertSuccessful();
+
+    $this->artisan('clorian:install', ['--no-interaction' => true])
+        ->expectsOutputToContain('Migrations already published')
+        ->assertSuccessful();
+
+    expect(publishedMigrations($this->installDir))->toHaveCount(3);
+});
+
+it('publishes only the migrations an app is missing, in order', function (): void {
+    $this->artisan('clorian:install', ['--no-interaction' => true])->assertSuccessful();
+
+    // As if an upgrade added the thresholds migration after the first install.
+    $thresholds = glob($this->installDir.'/database/migrations/*_create_clorian_thresholds_table.php') ?: [];
+    unlink($thresholds[0]);
+    $this->travel(1)->minutes();
+
+    $this->artisan('clorian:install', ['--no-interaction' => true])
+        ->expectsOutputToContain('Published 1 new migrations, kept 2')
+        ->assertSuccessful();
+
+    $names = publishedMigrations($this->installDir);
+    sort($names);
+
+    expect($names)->toHaveCount(3)
+        ->and(array_map(static fn (string $name): string => (string) preg_replace('/^\d{4}_\d{2}_\d{2}_\d{6}_/', '', $name), $names))
+        ->toBe(['create_clorian_weighings_table.php', 'create_clorian_answers_table.php', 'create_clorian_thresholds_table.php']);
+});
+
+it('gives each migration its own timestamp, in the package order', function (): void {
+    $this->artisan('clorian:install', ['--no-interaction' => true])->assertSuccessful();
+
+    $names = publishedMigrations($this->installDir);
+    sort($names);
+
+    expect(array_unique(array_map(static fn (string $name): string => substr($name, 0, 17), $names)))->toHaveCount(3)
+        ->and($names[0])->toEndWith('_create_clorian_weighings_table.php')
+        ->and($names[2])->toEndWith('_create_clorian_thresholds_table.php');
+});

@@ -16,6 +16,8 @@ use Phoenix1331\Clorian\Questions\ThresholdOverrides;
 use Phoenix1331\Clorian\Resolution\ThresholdResolver;
 use Phoenix1331\Clorian\Resolution\TunedThresholds;
 
+use function Laravel\Prompts\confirm;
+
 /**
  * Writes a tuned threshold to clorian_thresholds, which beats the policy and
  * config. Shows the thresholds in force before and after, and asks first.
@@ -113,7 +115,7 @@ final class TuneCommand extends Command
             return self::SUCCESS;
         }
 
-        if ($this->input->isInteractive() && ! $this->confirm('Save these thresholds?', false)) {
+        if ($this->input->isInteractive() && ! confirm('Save these thresholds?', default: false)) {
             $this->components->warn('Nothing saved.');
 
             return self::SUCCESS;
