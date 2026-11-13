@@ -80,7 +80,9 @@ $core = [
 foreach ($core as $namespace) {
     arch("{$namespace} does not depend on Laravel")
         ->expect($namespace)
-        ->not->toUse(['Illuminate', 'Laravel', 'Orchestra', 'Carbon']);
+        ->not->toUse(['Illuminate', 'Laravel', 'Orchestra', 'Carbon'])
+        // HTTP lives in one class, through Laravel's client so Http::fake() works.
+        ->ignoring('Phoenix1331\Clorian\Drivers\JevDriver');
 
     arch("{$namespace} never reaches into the Laravel edges of the package")
         ->expect($namespace)

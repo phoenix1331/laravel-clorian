@@ -24,7 +24,9 @@ return [
     | The scoring driver: "jev" calls TypeSafe's Jev API, "fake" returns
     | scripted scores for tests and demos. JEV_API_KEY and JEV_MODEL are
     | shared with laravel-jev-moderation, so apps running both use one key
-    | and one pinned model.
+    | and one pinned model. The Jev timeout is in seconds for queued calls
+    | (sync calls use sync_timeout); input over max_context_tokens is trimmed,
+    | context first, and the weighing's meta records "truncated".
     |
     */
 
@@ -36,6 +38,7 @@ return [
             'model' => env('JEV_MODEL', 'jev-latest'),
             'base_url' => env('JEV_BASE_URL', 'https://api.typesafe.ai/v1'),
             'timeout' => 5,
+            'max_context_tokens' => 24000,
         ],
         'fake' => [],
     ],

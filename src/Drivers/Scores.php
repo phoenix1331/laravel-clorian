@@ -17,6 +17,7 @@ final readonly class Scores
     /**
      * @param  array<string, array<string, float>>  $probabilities  question => option => probability
      * @param  string|null  $modelVersion  the version that answered (jev-1.14.0), not the alias asked for
+     * @param  bool  $truncated  the input was cut to fit the driver's context budget
      */
     public function __construct(
         public array $probabilities,
@@ -25,6 +26,7 @@ final readonly class Scores
         public ?int $inputTokens = null,
         public ?int $outputTokens = null,
         public ?string $requestId = null,
+        public bool $truncated = false,
     ) {}
 
     /**
@@ -67,7 +69,7 @@ final readonly class Scores
     /**
      * Metadata for clorian_weighings.meta.
      *
-     * @return array<string, int|string>
+     * @return array<string, int|string|true>
      */
     public function meta(): array
     {
@@ -76,7 +78,8 @@ final readonly class Scores
             'input_tokens' => $this->inputTokens,
             'output_tokens' => $this->outputTokens,
             'request_id' => $this->requestId,
-        ], static fn (int|string|null $value): bool => $value !== null);
+            'truncated' => $this->truncated ?: null,
+        ], static fn (int|string|bool|null $value): bool => $value !== null);
     }
 
     /**
