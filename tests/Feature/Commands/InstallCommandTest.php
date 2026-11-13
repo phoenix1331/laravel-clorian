@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Filesystem\Filesystem;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schema;
 use Phoenix1331\Clorian\ClorianServiceProvider;
 
@@ -132,4 +133,23 @@ it('gives each migration its own timestamp, in the package order', function (): 
     expect(array_unique(array_map(static fn (string $name): string => substr($name, 0, 17), $names)))->toHaveCount(3)
         ->and($names[0])->toEndWith('_create_clorian_weighings_table.php')
         ->and($names[2])->toEndWith('_create_clorian_thresholds_table.php');
+});
+
+it('prints .env lines whose comments the .env parser drops', function (): void {
+    $this->artisan('clorian:install', ['--no-interaction' => true])
+        ->expectsOutputToContain('# queued (in a job after the save) or sync (during the save)')
+        ->expectsOutputToContain('# none, subjectless or always')
+        ->assertSuccessful();
+
+    Artisan::call('clorian:install', ['--no-interaction' => true]);
+    preg_match_all('/^\s*([A-Z_]+=.*)$/m', Artisan::output(), $lines);
+
+    expect(Dotenv\Dotenv::parse(implode("\n", $lines[1])))->toBe([
+        'JEV_API_KEY' => '',
+        'JEV_MODEL' => 'jev-latest',
+        'CLORIAN_DRIVER' => 'jev',
+        'CLORIAN_MODE' => 'queued',
+        'CLORIAN_QUEUE' => 'default',
+        'CLORIAN_STORE_INPUT' => 'subjectless',
+    ]);
 });

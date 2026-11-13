@@ -67,7 +67,7 @@ Add `JEV_API_KEY` to `test-app/.env` (never commit it), then `php artisan cloria
 
 ## Recordings
 
-The terminal GIFs in `art/` come from the VHS tapes in `art/tapes/`. With [VHS](https://github.com/charmbracelet/vhs) installed (`brew install vhs` on macOS, which brings `ttyd` and `ffmpeg`; `go install github.com/charmbracelet/vhs@latest` plus both of those on Linux) and a seeded `test-app/` that has a Jev key, re-record them all with:
+The terminal GIFs in `docs/images/` come from the VHS tapes in `art/tapes/`. With [VHS](https://github.com/charmbracelet/vhs) installed (`brew install vhs` on macOS, which brings `ttyd` and `ffmpeg`; `go install github.com/charmbracelet/vhs@latest` plus both of those on Linux) and a seeded `test-app/` that has a Jev key, re-record them all with:
 
 ```bash
 composer record

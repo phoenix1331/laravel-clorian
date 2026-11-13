@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Clorian for Laravel</title>
+<meta name="description" content="Confidence-aware typed decisions for Laravel: Jev answers your policy's questions once, confident answers apply themselves, unsure ones go to a person, and every review tells you when to trust it more.">
+<meta property="og:title" content="Clorian for Laravel">
+<meta property="og:description" content="Let Jev make the obvious calls, send the unsure ones to a human, and measure when to trust it more.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://phoenix1331.github.io/laravel-clorian/">
+<meta property="og:image" content="https://phoenix1331.github.io/laravel-clorian/screenshots/overview.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2324272d'/%3E%3Cpath d='M16 5C16.8 12.4 19.6 15.2 27 16C19.6 16.8 16.8 19.6 16 27C15.2 19.6 12.4 16.8 5 16C12.4 15.2 15.2 12.4 16 5Z' fill='%2353c3a9'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #F5F6F8;
+    --paper: #FFFFFF;
+    --ink: #24272D;
+    --ink-soft: #5D6472;
+    --rule: #E1E4EA;
+    --accepted: #17806D;
+    --accepted-soft: #DCEFE9;
+    --review: #C48716;
+    --review-soft: #F7EBD2;
+    --unresolved: #8B94A3;
+    --unresolved-soft: #E7EAEF;
+    --failed: #C0453D;
+    --code-bg: #24272D;
+    --code-ink: #ECEEF1;
+    --focus: #17806D;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      color-scheme: dark;
+      --bg: #15171B;
+      --paper: #1C1F24;
+      --ink: #ECEEF1;
+      --ink-soft: #A3AAB6;
+      --rule: #2C3038;
+      --accepted: #3FB59D;
+      --accepted-soft: #143A33;
+      --review: #E2A93D;
+      --review-soft: #3D2F13;
+      --unresolved: #8992A1;
+      --unresolved-soft: #262A31;
+      --failed: #E06A61;
+      --code-bg: #101215;
+      --code-ink: #ECEEF1;
+      --focus: #3FB59D;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Schibsted Grotesk", system-ui, sans-serif; font-size: 1.0625rem; line-height: 1.6;
+  }
+  a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  a:hover { text-decoration-thickness: 2px; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 3px; }
+  img { max-width: 100%; height: auto; display: block; }
+
+  .wrap { max-width: 68rem; margin: 0 auto; padding: 0 1.25rem; }
+  .soft { color: var(--ink-soft); }
+
+  header.top { border-bottom: 1px solid var(--rule); background: var(--bg); position: sticky; top: 0; z-index: 10; }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 3.75rem; }
+  header.top nav { display: flex; gap: 1.25rem; font-size: .95rem; overflow-x: auto; white-space: nowrap; min-width: 0; }
+  header.top a:first-child { flex-shrink: 0; }
+  @media (max-width: 640px) { header.top nav { display: none; } }
+  .install code { scrollbar-width: none; }
+  .install code::-webkit-scrollbar { display: none; }
+  header.top nav a { text-decoration: none; color: var(--ink-soft); }
+  header.top nav a:hover { color: var(--ink); }
+  .logo { height: 1.9rem; width: auto; }
+  .logo-dark-bg { display: none; }
+  @media (prefers-color-scheme: dark) { .logo-light-bg { display: none; } .logo-dark-bg { display: block; } }
+
+  h1, h2, h3 { line-height: 1.15; letter-spacing: -0.015em; }
+  h1 { font-size: clamp(2.3rem, 5.2vw, 3.6rem); font-weight: 800; margin: 0 0 1rem; max-width: 16ch; }
+  h2 { font-size: clamp(1.6rem, 3vw, 2.1rem); font-weight: 700; margin: 0 0 .75rem; }
+  h3 { font-size: 1.2rem; font-weight: 700; margin: 1.75rem 0 .5rem; }
+  p { margin: 0 0 1rem; max-width: 70ch; }
+
+  section { padding: 4.5rem 0; border-top: 1px solid var(--rule); scroll-margin-top: 3.75rem; }
+  .hero { padding: 4rem 0 4.5rem; border-top: 0; }
+  .hero .wrap { display: grid; gap: 3rem; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); align-items: center; }
+  .lede { font-size: 1.25rem; color: var(--ink-soft); }
+  @media (max-width: 860px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); } }
+
+  .install { display: flex; align-items: stretch; margin-top: 1.75rem; max-width: 34rem; border-radius: 10px; overflow: hidden; background: var(--code-bg); }
+  .install code { flex: 1; min-width: 0; color: var(--code-ink); padding: .85rem 1rem; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .92rem; overflow-x: auto; white-space: nowrap; }
+  .install button { border: 0; background: var(--accepted); color: #fff; font: inherit; font-weight: 600; padding: 0 1.1rem; cursor: pointer; }
+
+  pre { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 1rem 1.15rem; overflow-x: auto; margin: 0 0 1.25rem; font-size: .9rem; line-height: 1.55; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .92em; }
+  p code, td code, li code { background: var(--unresolved-soft); padding: .08em .35em; border-radius: 4px; }
+  pre .c { color: #8C93A0; }
+  pre .k { color: #7FD3C0; }
+  pre .s { color: #F2C86B; }
+
+  /* The scale: the one bold element. */
+  .scale { background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; padding: 1.5rem 1.5rem 1.25rem; }
+  .scale-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+  .scale-answer { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+  .track-box { position: relative; padding: 2.4rem .9rem 2.1rem; }
+  .track { position: relative; height: 14px; border-radius: 999px; overflow: hidden; display: flex; }
+  .track span { height: 100%; }
+  .z-unresolved { background: var(--unresolved-soft); }
+  .z-review { background: var(--review-soft); }
+  .z-accept { background: var(--accepted-soft); flex: 1; }
+  .tick { position: absolute; top: 2.15rem; width: 2px; height: 1.4rem; background: color-mix(in srgb, var(--ink) 65%, transparent); }
+  .tick.review { width: 1px; background: color-mix(in srgb, var(--ink) 35%, transparent); }
+  .tick-label { position: absolute; top: 3.75rem; font-size: .8rem; color: var(--ink-soft); white-space: nowrap; }
+  .star { position: absolute; top: 2.85rem; width: 2rem; height: 2rem; transform: translate(-50%, -50%); }
+  .star path { transition: fill .2s; }
+  .pct { position: absolute; top: .35rem; transform: translateX(-50%); font-weight: 700; }
+  .controls { display: grid; gap: .65rem; margin-top: .5rem; }
+  .controls label { display: grid; grid-template-columns: minmax(5.5rem, 7.5rem) minmax(0, 1fr) 3rem; align-items: center; gap: .75rem; font-size: .92rem; }
+  .controls output { text-align: right; }
+  input[type=range] { width: 100%; accent-color: var(--ink); }
+  .verdict { margin-top: 1.1rem; padding: .85rem 1rem; border-radius: 10px; font-size: .97rem; }
+  .verdict strong { display: block; }
+  .v-accepted { background: var(--accepted-soft); }
+  .v-accepted strong { color: var(--accepted); }
+  .v-review { background: var(--review-soft); }
+  .v-review strong { color: var(--review); }
+  .v-unresolved { background: var(--unresolved-soft); }
+  .v-unresolved strong { color: var(--unresolved); }
+  .controls label.always { display: flex; align-items: center; gap: .6rem; margin-top: .25rem; }
+
+  .three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 2rem; margin-top: 2rem; }
+  .three h3 { margin-top: 0; display: flex; align-items: center; gap: .5rem; }
+  .dot { width: .7rem; height: .7rem; border-radius: 50%; display: inline-block; }
+  @media (max-width: 760px) { .three { grid-template-columns: minmax(0, 1fr); gap: 1.25rem; } }
+
+  .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2.5rem; align-items: start; }
+  @media (max-width: 860px) { .split { grid-template-columns: minmax(0, 1fr); } }
+
+  table { width: 100%; border-collapse: collapse; font-size: .95rem; margin-bottom: 1.25rem; }
+  th { text-align: left; font-weight: 600; color: var(--ink-soft); font-size: .85rem; padding: .5rem .75rem .5rem 0; border-bottom: 1px solid var(--rule); }
+  td { padding: .6rem .75rem .6rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  .table-scroll { overflow-x: auto; }
+
+  figure { margin: 0 0 2rem; }
+  figure img, .gif { border-radius: 12px; border: 1px solid var(--rule); box-shadow: 0 1px 0 var(--rule); }
+  figcaption { margin-top: .6rem; font-size: .92rem; color: var(--ink-soft); }
+  .gifs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2.5rem; margin-top: 1rem; }
+  .gifs .gif { width: 100%; }
+
+  ul.plain { padding-left: 1.1rem; margin: 0 0 1rem; }
+  ul.plain li { margin-bottom: .35rem; }
+
+  .card { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 1.25rem 1.4rem; }
+  .card h3 { margin-top: 0; }
+
+  footer { border-top: 1px solid var(--rule); padding: 2rem 0 3rem; font-size: .92rem; color: var(--ink-soft); }
+  footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
+  footer nav { display: flex; gap: 1.25rem; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a href="#top" aria-label="Clorian for Laravel, back to the top">
+      <img class="logo logo-light-bg" src="images/clorian-logo-dark.webp" alt="Clorian" width="2132" height="552">
+      <img class="logo logo-dark-bg" src="images/clorian-logo-light.webp" alt="Clorian" width="2132" height="552">
+    </a>
+    <nav aria-label="Sections">
+      <a href="#quick-start">Quick start</a>
+      <a href="#policies">Policies</a>
+      <a href="#review">Review and calibration</a>
+      <a href="#example">Example</a>
+      <a href="#commands">Commands</a>
+      <a href="#configuration">Configuration</a>
+      <a href="#data">Data</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="soft">Clorian is Welsh for scales.</p>
+        <h1>Let Jev make the obvious calls.</h1>
+        <p class="lede">Clorian asks Jev every question in your policy in one call. Confident answers apply themselves, unsure ones wait for a person, and every review tells you when to trust it more.</p>
+        <div class="install">
+          <code id="install-cmd">composer require phoenix1331/laravel-clorian</code>
+          <button type="button" id="copy">Copy</button>
+        </div>
+        <p class="soft" style="margin-top:1rem">PHP 8.3+, Laravel 12 or 13. Headless: bring your own UI.</p>
+      </div>
+
+      <div class="scale" aria-labelledby="scale-title">
+        <div class="scale-head">
+          <span class="soft" id="scale-title">Urgency</span>
+          <span class="soft">try it</span>
+        </div>
+        <div class="scale-answer">high</div>
+        <div class="track-box" aria-hidden="true">
+          <div class="pct" id="pct">0%</div>
+          <div class="track">
+            <span class="z-unresolved" id="z-unresolved"></span>
+            <span class="z-review" id="z-review"></span>
+            <span class="z-accept" id="z-accept"></span>
+          </div>
+          <div class="tick review" id="tick-review"></div>
+          <div class="tick" id="tick-accept"></div>
+          <div class="tick-label" id="label-review"></div>
+          <div class="tick-label" id="label-accept"></div>
+          <svg class="star" id="star" viewBox="0 0 24 24"><path id="star-path" d="M12 0C12.9 8.1 15.9 11.1 24 12C15.9 12.9 12.9 15.9 12 24C11.1 15.9 8.1 12.9 0 12C8.1 11.1 11.1 8.1 12 0Z"/></svg>
+        </div>
+        <div class="controls">
+          <label>Jev's confidence <input type="range" id="confidence" min="0" max="100" value="82"><output id="out-confidence"></output></label>
+          <label>Review from <input type="range" id="review" min="0" max="100" value="60"><output id="out-review"></output></label>
+          <label>Accept from <input type="range" id="accept" min="0" max="100" value="90"><output id="out-accept"></output></label>
+          <label class="always"><input type="checkbox" id="always"> Always review this option, however sure Jev is</label>
+        </div>
+        <div class="verdict" id="verdict" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="why">
+    <div class="wrap">
+      <h2>Why Clorian</h2>
+      <p>Classifying content with a model is easy. Knowing which answers to trust is not. Clorian puts a threshold on every answer and records what people decide, so automation grows with the evidence instead of on faith.</p>
+      <div class="three">
+        <div>
+          <h3><span class="dot" style="background:var(--accepted)"></span>Accepted</h3>
+          <p class="soft">Jev is at or above the accept threshold. Your policy's <code>apply()</code> acts on it straight away.</p>
+        </div>
+        <div>
+          <h3><span class="dot" style="background:var(--review)"></span>Review</h3>
+          <p class="soft">Sure enough to suggest, not to act. The default holds until a person upholds, overturns or marks it missed.</p>
+        </div>
+        <div>
+          <h3><span class="dot" style="background:var(--unresolved)"></span>Unresolved</h3>
+          <p class="soft">Below the review threshold. The default applies, and the answer is still recorded for the stats.</p>
+        </div>
+      </div>
+      <ul class="plain" style="margin-top:1.5rem">
+        <li><strong>One call per weighing.</strong> Every question in a policy is answered together, with a probability for every option.</li>
+        <li><strong>Thresholds per question and per option.</strong> Auto-accepting "critical" wakes someone up, so it can always go to a person while "low" accepts sooner.</li>
+        <li><strong>Calibration from real reviews.</strong> <code>clorian:stats</code> shows how often people agreed with Jev at each confidence, and suggests where the threshold can move.</li>
+        <li><strong>Private by default.</strong> Personal data is redacted before anything leaves your app, and stored input is encrypted.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="quick-start">
+    <div class="wrap">
+      <h2>Quick start</h2>
+      <pre><code>composer require phoenix1331/laravel-clorian
+php artisan clorian:install   <span class="c"># publishes config and migrations, asks queued or sync, runs migrate</span>
+php artisan clorian:ping      <span class="c"># checks your key with one sample call</span></code></pre>
+      <p>Add your key to <code>.env</code>, and pin the model to the version <code>clorian:ping</code> reports, so confidences stay comparable:</p>
+      <pre><code>JEV_API_KEY=...                    <span class="c"># your TypeSafe API key</span>
+JEV_MODEL=jev-1.14.0               <span class="c"># pin the version clorian:ping reports</span>
+CLORIAN_DRIVER=jev                 <span class="c"># jev, or fake to work offline</span>
+CLORIAN_MODE=queued                <span class="c"># queued (in a job after the save) or sync (during the save)</span>
+CLORIAN_STORE_INPUT=subjectless    <span class="c"># none, subjectless or always</span></code></pre>
+      <p>Mark a model with the policy that weighs it and the fields to send. It is weighed when created, and again when one of those fields changes:</p>
+      <pre><code><span class="k">use</span> Phoenix1331\Clorian\Attributes\Weigh;
+<span class="k">use</span> Phoenix1331\Clorian\Concerns\HasWeighings;
+
+#[Weigh(TicketTriage::<span class="k">class</span>, fields: [<span class="s">'subject'</span>, <span class="s">'body'</span>])]
+<span class="k">class</span> Ticket <span class="k">extends</span> Model
+{
+    <span class="k">use</span> HasWeighings;
+}</code></pre>
+      <p>Or weigh anything on demand, while the visitor waits. Sync calls time out after 2 seconds and fall back to the defaults, so nobody is kept waiting:</p>
+      <pre><code><span class="k">use</span> Phoenix1331\Clorian\Facades\Clorian;
+
+$weighing = Clorian::now(ContactIntent::<span class="k">class</span>, $request->message);
+
+<span class="k">if</span> ($weighing->accepted(<span class="s">'intent'</span>, <span class="s">'account_access'</span>)) {
+    <span class="k">return</span> redirect()->route(<span class="s">'help.password'</span>);
+}</code></pre>
+    </div>
+  </section>
+
+  <section id="policies">
+    <div class="wrap">
+      <h2>Policies</h2>
+      <p>A policy declares typed questions, what to use when an answer cannot be trusted, and what to do with the result. It is resolved from the container, so constructor injection works.</p>
+      <pre><code><span class="k">use</span> Phoenix1331\Clorian\Policies\Policy;
+<span class="k">use</span> Phoenix1331\Clorian\Questions\Question;
+<span class="k">use</span> Phoenix1331\Clorian\Questions\ThresholdOverrides;
+<span class="k">use</span> Phoenix1331\Clorian\Resolution\Answers;
+
+<span class="k">class</span> TicketTriage <span class="k">extends</span> Policy
+{
+    <span class="k">public function</span> questions(): array
+    {
+        <span class="k">return</span> [
+            <span class="c">// Config defaults: accept 0.90, review 0.60.</span>
+            Question::choice(<span class="s">'category'</span>, [
+                <span class="s">'billing'</span> => <span class="s">'Invoices, payments, refunds'</span>,
+                <span class="s">'bug'</span> => <span class="s">'Something in the product is broken'</span>,
+                <span class="s">'account'</span> => <span class="s">'Logging in, users, access'</span>,
+                <span class="s">'feature'</span> => <span class="s">'Asking for something new'</span>,
+            ])->instructions(<span class="s">'Which team should handle the ticket in `content`?'</span>),
+
+            Question::choice(<span class="s">'urgency'</span>, [<span class="s">'low'</span>, <span class="s">'normal'</span>, <span class="s">'high'</span>, <span class="s">'critical'</span>])
+                ->accept(0.90)->review(0.60)
+                ->option(<span class="s">'critical'</span>, fn (ThresholdOverrides $o) => $o->alwaysReview())
+                ->option(<span class="s">'low'</span>, fn (ThresholdOverrides $o) => $o->accept(0.75)),
+
+            <span class="c">// Must be above the review threshold (0.60 by default).</span>
+            Question::boolean(<span class="s">'needs_human'</span>)->accept(0.70),
+        ];
+    }
+
+    <span class="k">public function</span> defaults(): array
+    {
+        <span class="k">return</span> [<span class="s">'category'</span> => <span class="k">null</span>, <span class="s">'urgency'</span> => <span class="s">'normal'</span>, <span class="s">'needs_human'</span> => <span class="k">false</span>];
+    }
+
+    <span class="k">public function</span> apply(?Model $subject, Answers $answers): void
+    {
+        $subject?->update([
+            <span class="s">'queue'</span> => $answers->get(<span class="s">'category'</span>) ?? <span class="s">'triage'</span>,
+            <span class="s">'priority'</span> => $answers->get(<span class="s">'urgency'</span>),
+        ]);
+    }
+}</code></pre>
+      <div class="split">
+        <div>
+          <h3>Thresholds and precedence</h3>
+          <p>Reaching a threshold counts. The thresholds for an answer come from, highest first:</p>
+          <ol class="plain">
+            <li>A tuned option (<code>clorian:tune --option</code>)</li>
+            <li>A tuned question</li>
+            <li>The policy's <code>option()</code></li>
+            <li>The policy's question</li>
+            <li><code>default_thresholds</code> in the config</li>
+          </ol>
+          <p>Every answer stores the thresholds it was judged by, so calibration stays honest after tuning.</p>
+        </div>
+        <div>
+          <h3>Booleans, context and redaction</h3>
+          <p>A boolean's answer is true at a probability of 0.5 or more, with a confidence of whichever side won, so a confident "no" can be accepted too. <code>apply()</code> receives <code>true</code> or <code>false</code>.</p>
+          <p><code>context(?Model $subject)</code> adds short facts to every call, such as the customer's plan. <code>redact(array $input)</code> runs on the input and the context before anything is sent; the default removes emails, phone numbers and long digit runs. Call <code>parent::redact()</code> when adding your own.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="modes">
+    <div class="wrap">
+      <h2>Queued or sync</h2>
+      <div class="split">
+        <div>
+          <p><strong>Queued</strong> (the default) dispatches a <code>WeighSubject</code> job once the save commits, so a rolled-back save weighs nothing. Rate limits and outages are retried after 10 and then 60 seconds, or when Jev says to; a bad key fails at once. After the last attempt the weighing is stored as failed and your defaults apply.</p>
+        </div>
+        <div>
+          <p><strong>Sync</strong> weighs during the save with <code>sync_timeout</code> (2 seconds). On a timeout or failure the defaults apply and the save carries on. Unchanged content is never weighed twice, and weighing it again on purpose (<code>weighNow()</code>, <code>clorian:rescan</code>) keeps every human decision.</p>
+        </div>
+      </div>
+      <pre><code>$ticket->weighings;              <span class="c">// every weighing, MorphMany</span>
+$ticket->latestWeighing;         <span class="c">// the most recent</span>
+$ticket->answer(<span class="s">'urgency'</span>);       <span class="c">// the latest WeighingAnswer for a question</span>
+$ticket->weighNow();             <span class="c">// weigh again, inline</span>
+Ticket::pendingReview()->get();  <span class="c">// models with an answer waiting for a person</span></code></pre>
+    </div>
+  </section>
+
+  <section id="review">
+    <div class="wrap">
+      <h2>Review and calibration</h2>
+      <p>Record a human decision from your own UI. The policy's <code>apply()</code> runs again with the decision in place, and a re-review replaces the earlier one.</p>
+      <pre><code><span class="k">use</span> Phoenix1331\Clorian\Reviews\ReviewAction;
+
+Clorian::review($answer, ReviewAction::Upheld, <span class="k">null</span>, $request->user());       <span class="c">// Jev was right</span>
+Clorian::review($answer, ReviewAction::Overturned, <span class="s">'high'</span>, $request->user()); <span class="c">// the right option</span>
+Clorian::review($answer, ReviewAction::Missed, <span class="k">null</span>, $request->user());       <span class="c">// no option fits</span></code></pre>
+      <p>Then see how often people agreed with Jev, by confidence band. Once 30 reviews from a band upwards are upheld at least 95% of the time, Clorian suggests accepting from there; apply it with one command:</p>
+      <pre><code>php artisan clorian:stats <span class="s">'App\Clorian\TicketTriage'</span> --days=30
+php artisan clorian:tune <span class="s">'App\Clorian\TicketTriage'</span> urgency --option=low --accept=0.85</code></pre>
+      <p class="soft">The target (0.95) and minimum sample (30) are in <code>calibration</code> in the config.</p>
+    </div>
+  </section>
+
+  <section id="example">
+    <div class="wrap">
+      <h2>Example: ticket triage</h2>
+      <p>Clorian is headless; these come from a demo app built on it with the policy above and 40 support tickets weighed by Jev. The overview shows where every answer landed. Each answer sits on its scale: the star is Jev's confidence, the ticks are the thresholds.</p>
+      <figure>
+        <img src="screenshots/overview.png" alt="The demo's overview: 68 answers accepted and applied, 7 waiting for a person, 19 unresolved, with a bar per question and the latest weighings on their scales." width="1425" height="900" loading="lazy">
+        <figcaption>Every answer, weighed: accepted, waiting for a person, or left to the defaults.</figcaption>
+      </figure>
+      <figure>
+        <img src="screenshots/ticket.png" alt="One ticket: category billing accepted at 98 percent, and urgency critical at 77 percent sent to review because critical always is, then changed to high by a person." width="1425" height="900" loading="lazy">
+        <figcaption>One ticket: billing accepted at 98%, while "critical" always goes to a person, who changed it to "high".</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="commands">
+    <div class="wrap">
+      <h2>Commands</h2>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><code>clorian:install</code></td><td>Publishes the config and any missing migrations, asks for the mode, prints the <code>.env</code> keys. Safe to run again.</td></tr>
+            <tr><td><code>clorian:ping</code></td><td>One sample call: whether the key is set, the version that answered, latency, and a warning if <code>JEV_MODEL</code> is not pinned</td></tr>
+            <tr><td><code>clorian:stats {policy?} --days=30</code></td><td>Counts, upheld, overturned and missed rates, rates by confidence band, and suggested thresholds</td></tr>
+            <tr><td><code>clorian:tune {policy} {question} --option= --accept= --review=</code></td><td>Shows the thresholds before and after, warns when an option would stop always going to review, asks, then saves. <code>--accept=never</code> always reviews</td></tr>
+            <tr><td><code>clorian:rescan {model} --since= --chunk=500 --sync</code></td><td>Weighs existing models again, keeping human decisions on unchanged content</td></tr>
+            <tr><td><code>clorian:prune --pretend</code></td><td>Deletes old weighings and those of deleted models, and clears old stored input. Schedule it daily</td></tr>
+            <tr><td><code>clorian:add-column {table}</code></td><td>Writes a migration for an indexed <code>clorian_status</code> column that <code>pendingReview()</code> reads, for busy apps</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gifs">
+        <figure><img class="gif" src="images/stats.gif" alt="clorian:stats printing counts, review rates and confidence bands for the ticket triage policy" width="1400" height="760" loading="lazy"><figcaption>clorian:stats</figcaption></figure>
+        <figure><img class="gif" src="images/tune.gif" alt="clorian:tune raising the accept threshold for low urgency from 0.75 to 0.85 after a confirm" width="1400" height="560" loading="lazy"><figcaption>clorian:tune</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="testing">
+    <div class="wrap">
+      <h2>Testing with the fake</h2>
+      <p><code>Clorian::fake()</code> swaps in a scripted driver. Weighings still run for real (thresholds, storage, <code>apply()</code>), nothing leaves your app, and every weighing is recorded for assertions:</p>
+      <pre><code>Clorian::fake()
+    ->answer(<span class="s">'category'</span>, <span class="s">'billing'</span>, 0.95)
+    ->answer(<span class="s">'urgency'</span>, <span class="s">'critical'</span>, 0.97);
+
+$ticket = Ticket::create([<span class="s">'subject'</span> => <span class="s">'Charged twice'</span>, <span class="s">'body'</span> => <span class="s">'Refund please'</span>]);
+
+Clorian::assertWeighed(TicketTriage::<span class="k">class</span>, $ticket);
+Clorian::assertWeighedTimes(TicketTriage::<span class="k">class</span>, 1);
+expect($ticket->refresh()->queue)->toBe(<span class="s">'billing'</span>);</code></pre>
+      <p class="soft">Also <code>distribution()</code> for a full set of probabilities, <code>fail()</code> to test the fallback to defaults, <code>assertNotWeighed()</code>, <code>assertNothingWeighed()</code> and <code>weighings()</code>.</p>
+
+      <h3>Adding a driver</h3>
+      <p>Jev is built in. To score with another provider, implement <code>Driver</code> and register it:</p>
+      <pre><code><span class="k">use</span> Phoenix1331\Clorian\Drivers\Driver;
+<span class="k">use</span> Phoenix1331\Clorian\Drivers\Scores;
+
+<span class="k">final class</span> MyDriver <span class="k">implements</span> Driver
+{
+    <span class="k">public function</span> name(): string { <span class="k">return</span> <span class="s">'mine'</span>; }
+
+    <span class="k">public function</span> score(array $questions, string|array $content, array $context, ?float $timeout = <span class="k">null</span>): Scores
+    {
+        <span class="c">// question => option => probability, for every option of every question</span>
+        <span class="k">return new</span> Scores(probabilities: [<span class="s">'category'</span> => [<span class="s">'billing'</span> => 0.9, <span class="s">'bug'</span> => 0.1]]);
+    }
+}
+
+<span class="c">// In a service provider's boot(); then CLORIAN_DRIVER=mine</span>
+Clorian::extend(<span class="s">'mine'</span>, fn ($app, array $config) => <span class="k">new</span> MyDriver);</code></pre>
+
+      <h3>Events</h3>
+      <p><code>AnswerAccepted</code>, <code>AnswerNeedsReview</code>, <code>AnswerReviewed</code> and <code>WeighingFailed</code> fire once the surrounding transaction commits. They carry ids, the policy, question, value, confidence and the model's type and id, never the content, so they are safe to queue and log.</p>
+    </div>
+  </section>
+
+  <section id="configuration">
+    <div class="wrap">
+      <h2>Configuration</h2>
+      <p><code>config/clorian.php</code>, published by <code>clorian:install</code>:</p>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>Key</th><th>Default</th><th>Environment variable</th></tr></thead>
+          <tbody>
+            <tr><td><code>enabled</code></td><td><code>true</code></td><td><code>CLORIAN_ENABLED</code></td></tr>
+            <tr><td><code>driver</code></td><td><code>jev</code></td><td><code>CLORIAN_DRIVER</code> (<code>jev</code>, <code>fake</code> or your own)</td></tr>
+            <tr><td><code>drivers.jev.key</code></td><td>none</td><td><code>JEV_API_KEY</code></td></tr>
+            <tr><td><code>drivers.jev.model</code></td><td><code>jev-latest</code></td><td><code>JEV_MODEL</code> (pin a version)</td></tr>
+            <tr><td><code>drivers.jev.base_url</code></td><td><code>https://api.typesafe.ai/v1</code></td><td><code>JEV_BASE_URL</code></td></tr>
+            <tr><td><code>drivers.jev.timeout</code></td><td><code>5</code> seconds (queued calls)</td><td></td></tr>
+            <tr><td><code>drivers.jev.max_context_tokens</code></td><td><code>24000</code></td><td></td></tr>
+            <tr><td><code>mode</code></td><td><code>queued</code></td><td><code>CLORIAN_MODE</code> (<code>queued</code> or <code>sync</code>)</td></tr>
+            <tr><td><code>queue</code></td><td><code>default</code></td><td><code>CLORIAN_QUEUE</code></td></tr>
+            <tr><td><code>sync_timeout</code></td><td><code>2.0</code> seconds</td><td></td></tr>
+            <tr><td><code>store_input</code></td><td><code>subjectless</code></td><td><code>CLORIAN_STORE_INPUT</code> (<code>none</code>, <code>subjectless</code> or <code>always</code>)</td></tr>
+            <tr><td><code>status_column.enabled</code></td><td><code>false</code></td><td><code>CLORIAN_STATUS_COLUMN</code></td></tr>
+            <tr><td><code>default_thresholds</code></td><td>accept <code>0.90</code>, review <code>0.60</code></td><td></td></tr>
+            <tr><td><code>calibration</code></td><td>target <code>0.95</code>, min_sample <code>30</code></td><td></td></tr>
+            <tr><td><code>prune</code></td><td>weighings after <code>90</code> days, input after <code>30</code></td><td></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="data">
+    <div class="wrap">
+      <h2>Data and privacy</h2>
+      <div class="split">
+        <div>
+          <h3 style="margin-top:0">Sent to TypeSafe</h3>
+          <p>The <code>#[Weigh]</code> fields (or the input to <code>Clorian::now()</code>) and your policy's <code>context()</code>, both after <code>redact()</code>, plus the questions and option descriptions. Your key travels in the <code>Authorization</code> header only. With the <code>fake</code> driver nothing leaves your app.</p>
+          <p>The default redaction is a floor: names and addresses need your policy's own <code>redact()</code>.</p>
+        </div>
+        <div>
+          <h3 style="margin-top:0">Stored</h3>
+          <p>Answers, confidences, the thresholds in force and reviews, in three tables. The input itself only as <code>store_input</code> allows, redacted and encrypted with your <code>APP_KEY</code>. Events, exceptions, logs and queued jobs never carry content; tests check every one.</p>
+          <p><code>clorian:prune</code> handles retention. The full list of what is stored and why is in <a href="https://github.com/phoenix1331/laravel-clorian/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="family">
+    <div class="wrap">
+      <h2>Family</h2>
+      <div class="split">
+        <div class="card">
+          <h3><a href="https://github.com/phoenix1331/laravel-jev-moderation">laravel-jev-moderation</a></h3>
+          <p class="soft">Content moderation with Jev: pass, flag for a person or block any Eloquent model, with per-category thresholds. Shares <code>JEV_API_KEY</code> and <code>JEV_MODEL</code> with Clorian.</p>
+          <p class="soft" style="margin:0"><a href="https://phoenix1331.github.io/laravel-jev-moderation">Documentation</a>, <a href="https://packagist.org/packages/phoenix1331/laravel-jev-moderation">Packagist</a></p>
+        </div>
+        <div class="card">
+          <h3>filament-clorian</h3>
+          <p class="soft" style="margin:0">Planned: a Filament review queue and calibration widget built on this package.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>MIT licence. Requires PHP 8.3+ and Laravel 12 or 13.</span>
+    <nav aria-label="Project links">
+      <a href="https://github.com/phoenix1331/laravel-clorian">GitHub</a>
+      <a href="https://packagist.org/packages/phoenix1331/laravel-clorian">Packagist</a>
+      <a href="https://github.com/phoenix1331/laravel-clorian/blob/main/CHANGELOG.md">Changelog</a>
+      <a href="https://github.com/phoenix1331/laravel-clorian/blob/main/LICENSE.md">Licence</a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var button = document.getElementById('copy');
+    button.addEventListener('click', function () {
+      var text = document.getElementById('install-cmd').textContent;
+      (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(function () {
+        button.textContent = 'Copied';
+        setTimeout(function () { button.textContent = 'Copy'; }, 1500);
+      }, function () { button.textContent = 'Select and copy'; });
+    });
+
+    // The same rule as ThresholdResolver: reaching a threshold counts.
+    var el = function (id) { return document.getElementById(id); };
+    var confidence = el('confidence'), review = el('review'), accept = el('accept'), always = el('always');
+    var css = getComputedStyle(document.documentElement);
+
+    function pct(v) { return Math.min(100, Math.max(0, v)) + '%'; }
+
+    function render() {
+      var c = +confidence.value, r = +review.value, a = +accept.value, never = always.checked;
+
+      // Review must stay below accept, as the package's validation requires.
+      if (!never && r >= a) { if (this === review) { a = Math.min(100, r + 1); accept.value = a; } else { r = Math.max(0, a - 1); review.value = r; } }
+
+      var acceptEdge = never ? 100 : a;
+      el('z-unresolved').style.width = pct(r);
+      el('z-review').style.width = pct(acceptEdge - r);
+      el('z-accept').style.display = never ? 'none' : '';
+      el('tick-review').style.left = 'calc(.9rem + (100% - 1.8rem) * ' + r / 100 + ')';
+      el('tick-accept').style.left = 'calc(.9rem + (100% - 1.8rem) * ' + a / 100 + ')';
+      el('tick-accept').style.display = never ? 'none' : '';
+      el('star').style.left = 'calc(.9rem + (100% - 1.8rem) * ' + c / 100 + ')';
+      el('pct').style.left = el('star').style.left;
+      el('pct').textContent = c + '%';
+
+      var lr = el('label-review'), la = el('label-accept');
+      lr.textContent = 'review ' + (r / 100).toFixed(2);
+      lr.style.left = 'calc(.9rem + (100% - 1.8rem) * ' + r / 100 + ')';
+      lr.style.transform = 'translateX(calc(-100% - .35rem))';
+      la.textContent = never ? 'always reviewed' : 'accept ' + (a / 100).toFixed(2);
+      la.style.left = never ? 'auto' : 'calc(.9rem + (100% - 1.8rem) * ' + a / 100 + ')';
+      la.style.right = never ? '.9rem' : 'auto';
+      la.style.transform = never ? 'none' : (a > 85 ? 'translateX(-100%)' : 'translateX(.35rem)');
+
+      el('out-confidence').textContent = (c / 100).toFixed(2);
+      el('out-review').textContent = (r / 100).toFixed(2);
+      el('out-accept').textContent = never ? 'never' : (a / 100).toFixed(2);
+      accept.disabled = never;
+
+      var status = (!never && c >= a) ? 'accepted' : (c >= r ? 'review' : 'unresolved');
+      el('star-path').style.fill = css.getPropertyValue('--' + status);
+
+      var verdict = el('verdict');
+      verdict.className = 'verdict v-' + status;
+      verdict.innerHTML = {
+        accepted: '<strong>Accepted</strong>apply() sets the urgency to high straight away.',
+        review: '<strong>Sent to review</strong>The default (normal) holds until a person decides.',
+        unresolved: '<strong>Unresolved</strong>The default (normal) applies; the answer is kept for the stats.'
+      }[status];
+    }
+
+    [confidence, review, accept, always].forEach(function (input) { input.addEventListener('input', render); });
+    render.call(null);
+  })();
+</script>
+</body>
+</html>

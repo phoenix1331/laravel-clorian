@@ -76,8 +76,6 @@
             "@test:coverage"
         ],
         "record": [
-            "vhs art/tapes/install.tape",
-            "vhs art/tapes/ping.tape",
             "vhs art/tapes/stats.tape",
             "vhs art/tapes/tune.tape"
         ]
@@ -89,7 +87,7 @@
         "test": "Run the Pest suite",
         "test:coverage": "Run the Pest suite with the 90% coverage gate on src/",
         "check": "Run style check, static analysis and the coverage gate, in that order",
-        "record": "Record the README terminal GIFs into art/ with VHS (needs vhs, a seeded test-app/ and its JEV_API_KEY)"
+        "record": "Record the stats and tune GIFs into docs/images with VHS (needs vhs, a seeded test-app/ and its JEV_API_KEY)"
     },
     "config": {
         "sort-packages": true,

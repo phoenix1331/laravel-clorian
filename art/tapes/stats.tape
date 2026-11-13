@@ -1,5 +1,5 @@
 # php artisan clorian:stats in test-app/: counts, review rates and bands from the seeded tickets.
-Output art/stats.gif
+Output docs/images/stats.gif
 Source art/tapes/settings.tape
 # The summary table is wide: a smaller font keeps every column on one line.
 Set FontSize 14

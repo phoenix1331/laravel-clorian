@@ -111,17 +111,29 @@ final class InstallCommand extends Command
     }
 
     /**
+     * The .env keys, each with its choices as a comment. Laravel's .env
+     * parser drops a # comment after a value, so the lines paste as they are.
+     *
      * @return list<string>
      */
     private function environment(string $mode): array
     {
-        return [
-            'JEV_API_KEY=',
-            'JEV_MODEL=jev-latest',
-            'CLORIAN_DRIVER=jev',
-            "CLORIAN_MODE={$mode}",
-            'CLORIAN_QUEUE=default',
-            'CLORIAN_STORE_INPUT=subjectless',
+        $keys = [
+            'JEV_API_KEY=' => 'your TypeSafe API key',
+            'JEV_MODEL=jev-latest' => 'pin the version clorian:ping reports, e.g. jev-1.14.0',
+            'CLORIAN_DRIVER=jev' => 'jev, or fake to work offline',
+            "CLORIAN_MODE={$mode}" => 'queued (in a job after the save) or sync (during the save)',
+            'CLORIAN_QUEUE=default' => 'the queue weighing jobs run on',
+            'CLORIAN_STORE_INPUT=subjectless' => 'none, subjectless or always',
         ];
+
+        $width = max(array_map(strlen(...), array_keys($keys))) + 2;
+        $lines = [];
+
+        foreach ($keys as $line => $comment) {
+            $lines[] = str_pad($line, $width).'# '.$comment;
+        }
+
+        return $lines;
     }
 }

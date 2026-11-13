@@ -1,5 +1,5 @@
 # php artisan clorian:tune in test-app/: before and after, a confirm, then saved.
-Output art/tune.gif
+Output docs/images/tune.gif
 Source art/tapes/settings.tape
 Set Height 560
 
