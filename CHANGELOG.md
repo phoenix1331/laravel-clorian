@@ -34,4 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `InvalidThresholds`, naming the policy, question and option, for out-of-range or crossed thresholds, 2 to 255 options, duplicate or unknown options and over-long names
 - `Weighing`, `WeighingAnswer` and `TunedThreshold` models with factories, and the `Status`, `ReviewAction` and `WeighingStatus` enums
 
+### Security
+
+- Jev connection errors are not chained to the HTTP client's exception, which holds the request with the API key and the content
+
 [Unreleased]: https://github.com/phoenix1331/laravel-clorian/commits/main

@@ -103,11 +103,14 @@ final readonly class JevDriver implements Driver
                     'questions' => $payload,
                 ]);
         } catch (ConnectionException $e) {
+            // Not chained: Guzzle's exception underneath holds the request,
+            // Authorization header and content included, for any error
+            // reporter that walks the chain.
             if (self::isTimeout($e)) {
-                throw DriverException::timedOut(self::NAME, $seconds, $e);
+                throw DriverException::timedOut(self::NAME, $seconds);
             }
 
-            throw DriverException::retryable('Could not reach Jev: '.$e->getMessage(), previous: $e);
+            throw DriverException::retryable('Could not reach Jev: '.$e->getMessage());
         }
 
         if ($response->failed()) {

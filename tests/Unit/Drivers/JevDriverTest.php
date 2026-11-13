@@ -277,7 +277,7 @@ it('reports a timeout as retryable', function (): void {
 
     expect($e->retryable)->toBeTrue()
         ->and($e->getMessage())->toBe('The jev driver did not answer within 2s.')
-        ->and($e->getPrevious())->toBeInstanceOf(ConnectionException::class);
+        ->and($e->getPrevious())->toBeNull();
 });
 
 it('reports a connection failure as retryable', function (): void {
