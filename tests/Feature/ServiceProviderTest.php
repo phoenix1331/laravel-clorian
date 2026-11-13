@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
 use Phoenix1331\Clorian\Clorian;
 use Phoenix1331\Clorian\ClorianServiceProvider;
@@ -35,4 +36,8 @@ it('publishes the config file under its tag', function (): void {
 
     expect($paths)->toHaveCount(1)
         ->and(array_key_first($paths))->toEndWith('config/clorian.php');
+});
+
+it('registers the console commands', function (): void {
+    expect(array_keys(Artisan::all()))->toContain('clorian:stats', 'clorian:tune');
 });

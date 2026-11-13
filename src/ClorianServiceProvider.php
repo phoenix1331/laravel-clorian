@@ -9,6 +9,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Phoenix1331\Clorian\Calibration\Calibrator;
 use Phoenix1331\Clorian\Calibration\Observations;
+use Phoenix1331\Clorian\Commands\StatsCommand;
+use Phoenix1331\Clorian\Commands\TuneCommand;
 use Phoenix1331\Clorian\Drivers\FakeDriver;
 use Phoenix1331\Clorian\Policies\PolicyRegistry;
 use Phoenix1331\Clorian\Resolution\TunedThresholds;
@@ -49,5 +51,9 @@ class ClorianServiceProvider extends ServiceProvider
         $this->publishesMigrations([
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'clorian-migrations');
+
+        if ($this->app->runningInConsole()) {
+            $this->commands([StatsCommand::class, TuneCommand::class]);
+        }
     }
 }
