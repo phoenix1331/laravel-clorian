@@ -39,5 +39,5 @@ it('publishes the config file under its tag', function (): void {
 });
 
 it('registers the console commands', function (): void {
-    expect(array_keys(Artisan::all()))->toContain('clorian:stats', 'clorian:tune');
+    expect(array_keys(Artisan::all()))->toContain('clorian:install', 'clorian:ping', 'clorian:stats', 'clorian:tune');
 });

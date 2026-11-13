@@ -87,7 +87,8 @@ it('allows one tuned threshold per policy, question and option', function (): vo
     TunedThreshold::factory()->create();
     TunedThreshold::factory()->forOption('critical')->create();
 
-    expect(fn () => TunedThreshold::factory()->create())->toThrow(QueryException::class);
+    // In a savepoint: on PostgreSQL a failed statement aborts the test's own transaction.
+    expect(fn () => DB::transaction(fn () => TunedThreshold::factory()->create()))->toThrow(QueryException::class);
 });
 
 it('stores the whole question as an empty option so the unique key holds', function (): void {

@@ -203,10 +203,11 @@ it('fires nothing for a rejected review', function (): void {
 it('accepts a reviewer that is not an Eloquent model', function (): void {
     [, $weighing] = reviewableTicket();
 
-    $answer = Clorian::review(reviewAnswer($weighing, 'urgency'), ReviewAction::Upheld, null, new GenericUser(['id' => 'svc-7']));
+    // An integer id: reviewer_id follows the app's morph key type (bigint by default).
+    $answer = Clorian::review(reviewAnswer($weighing, 'urgency'), ReviewAction::Upheld, null, new GenericUser(['id' => 7]));
 
     expect($answer->reviewer_type)->toBe(GenericUser::class)
-        ->and($answer->reviewer_id)->toBe('svc-7');
+        ->and($answer->refresh()->reviewer_id)->toBe(7);
 });
 
 it('stores no reviewer id it cannot read', function (): void {

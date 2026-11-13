@@ -9,6 +9,8 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Phoenix1331\Clorian\Calibration\Calibrator;
 use Phoenix1331\Clorian\Calibration\Observations;
+use Phoenix1331\Clorian\Commands\InstallCommand;
+use Phoenix1331\Clorian\Commands\PingCommand;
 use Phoenix1331\Clorian\Commands\StatsCommand;
 use Phoenix1331\Clorian\Commands\TuneCommand;
 use Phoenix1331\Clorian\Drivers\FakeDriver;
@@ -53,7 +55,7 @@ class ClorianServiceProvider extends ServiceProvider
         ], 'clorian-migrations');
 
         if ($this->app->runningInConsole()) {
-            $this->commands([StatsCommand::class, TuneCommand::class]);
+            $this->commands([InstallCommand::class, PingCommand::class, StatsCommand::class, TuneCommand::class]);
         }
     }
 }

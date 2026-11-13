@@ -22,7 +22,7 @@ use Phoenix1331\Clorian\Reviews\ReviewAction;
  * @property string $question
  * @property string|null $value
  * @property float $confidence
- * @property array<string, float> $scores
+ * @property array<string, float> $scores option => probability; key order is not kept on MySQL, so order by the question's options
  * @property float|null $accept_threshold
  * @property float|null $review_threshold
  * @property Status $status

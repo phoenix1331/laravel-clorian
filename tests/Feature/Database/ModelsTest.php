@@ -76,7 +76,8 @@ describe('WeighingAnswer', function (): void {
         $answer = WeighingAnswer::factory()->create()->fresh();
 
         expect($answer?->confidence)->toBe(0.95)
-            ->and($answer?->scores)->toBe(['billing' => 0.95, 'bug' => 0.0167, 'account' => 0.0167, 'feature' => 0.0167])
+            // toEqual: MySQL's JSON type re-sorts object keys, so only the pairs are guaranteed.
+            ->and($answer?->scores)->toEqual(['billing' => 0.95, 'bug' => 0.0167, 'account' => 0.0167, 'feature' => 0.0167])
             ->and($answer?->accept_threshold)->toBe(0.9)
             ->and($answer?->review_threshold)->toBe(0.6)
             ->and($answer?->status)->toBe(Status::Accepted)
@@ -121,7 +122,7 @@ describe('WeighingAnswer', function (): void {
         $answer = WeighingAnswer::factory()->answering('needs_human', 'true', 0.9, ['true', 'false'])->create();
 
         expect($answer->question)->toBe('needs_human')
-            ->and($answer->scores)->toBe(['true' => 0.9, 'false' => 0.1]);
+            ->and($answer->scores)->toEqual(['true' => 0.9, 'false' => 0.1]);
     });
 
     it('gives a one-option question all the probability', function (): void {
