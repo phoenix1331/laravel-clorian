@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Clorian for Laravel</title>
-<meta name="description" content="Confidence-aware typed decisions for Laravel: Jev answers your policy's questions once, confident answers apply themselves, unsure ones go to a person, and every review tells you when to trust it more.">
+<meta name="description" content="Confidence-aware typed decisions for Laravel. Route tickets, categorise listings, catch spam, flag refunds: Jev answers your questions about any model, confident answers apply themselves, unsure ones go to a person, and every review tells you when to trust it more.">
 <meta property="og:title" content="Clorian for Laravel">
-<meta property="og:description" content="Let Jev make the obvious calls, send the unsure ones to a human, and measure when to trust it more.">
+<meta property="og:description" content="Typed decisions from free text for any Laravel model: let Jev make the obvious calls, send the unsure ones to a person, and measure when to trust it more.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://phoenix1331.github.io/laravel-clorian/">
 <meta property="og:image" content="https://phoenix1331.github.io/laravel-clorian/screenshots/overview.png">
@@ -99,7 +99,7 @@
   .install button { border: 0; background: var(--accepted); color: #fff; font: inherit; font-weight: 600; padding: 0 1.1rem; cursor: pointer; }
 
   pre { background: var(--code-bg); color: var(--code-ink); border-radius: 10px; padding: 1rem 1.15rem; overflow-x: auto; margin: 0 0 1.25rem; font-size: .9rem; line-height: 1.55; }
-  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .92em; }
+  code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: .92em; font-variant-ligatures: none; }
   p code, td code, li code { background: var(--unresolved-soft); padding: .08em .35em; border-radius: 4px; }
   pre .c { color: #8C93A0; }
   pre .k { color: #7FD3C0; }
@@ -109,6 +109,8 @@
   .scale { background: var(--paper); border: 1px solid var(--rule); border-radius: 18px; padding: 1.5rem 1.5rem 1.25rem; }
   .scale-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
   .scale-answer { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; }
+  .picker { display: flex; align-items: center; gap: .5rem; font-size: .9rem; }
+  .picker select { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--rule); border-radius: 8px; padding: .3rem .5rem; }
   .track-box { position: relative; padding: 2.4rem .9rem 2.1rem; }
   .track { position: relative; height: 14px; border-radius: 999px; overflow: hidden; display: flex; }
   .track span { height: 100%; }
@@ -159,6 +161,10 @@
 
   .card { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 1.25rem 1.4rem; }
   .card h3 { margin-top: 0; }
+  .uses { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; margin: 1.5rem 0; }
+  .uses .card pre { margin: 0; font-size: .82rem; }
+  .uses .card p { margin-bottom: .9rem; }
+  @media (max-width: 860px) { .uses { grid-template-columns: minmax(0, 1fr); } }
 
   footer { border-top: 1px solid var(--rule); padding: 2rem 0 3rem; font-size: .92rem; color: var(--ink-soft); }
   footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
@@ -174,6 +180,8 @@
       <img class="logo logo-dark-bg" src="images/clorian-logo-light.webp" alt="Clorian" width="2132" height="552">
     </a>
     <nav aria-label="Sections">
+      <a href="#use-cases">Use cases</a>
+      <a href="#how-it-works">How it works</a>
       <a href="#quick-start">Quick start</a>
       <a href="#policies">Policies</a>
       <a href="#review">Review and calibration</a>
@@ -191,7 +199,7 @@
       <div>
         <p class="soft">Clorian is Welsh for scales.</p>
         <h1>Let Jev make the obvious calls.</h1>
-        <p class="lede">Clorian asks Jev every question in your policy in one call. Confident answers apply themselves, unsure ones wait for a person, and every review tells you when to trust it more.</p>
+        <p class="lede">Turn free text into decisions your app can act on: which team, how urgent, which category, spam or not, does a manager need to see it. Clorian asks Jev, applies the answers it is sure of, sends the rest to a person, and learns from every review when to trust it more.</p>
         <div class="install">
           <code id="install-cmd">composer require phoenix1331/laravel-clorian</code>
           <button type="button" id="copy">Copy</button>
@@ -201,10 +209,19 @@
 
       <div class="scale" aria-labelledby="scale-title">
         <div class="scale-head">
-          <span class="soft" id="scale-title">Urgency</span>
-          <span class="soft">try it</span>
+          <span class="soft" id="scale-title">Support ticket: urgency</span>
+          <label class="soft picker">Example
+            <select id="scale-example" aria-label="Choose an example">
+              <option value="ticket">Support ticket</option>
+              <option value="listing">Marketplace listing</option>
+              <option value="review">Product review</option>
+              <option value="refund">Refund request</option>
+              <option value="lead">Contact form</option>
+              <option value="article">Blog post</option>
+            </select>
+          </label>
         </div>
-        <div class="scale-answer">high</div>
+        <div class="scale-answer" id="scale-answer">high</div>
         <div class="track-box" aria-hidden="true">
           <div class="pct" id="pct">0%</div>
           <div class="track">
@@ -232,7 +249,7 @@
   <section id="why">
     <div class="wrap">
       <h2>Why Clorian</h2>
-      <p>Classifying content with a model is easy. Knowing which answers to trust is not. Clorian puts a threshold on every answer and records what people decide, so automation grows with the evidence instead of on faith.</p>
+      <p>Plenty of decisions in an app come down to reading some text: a ticket, a listing, a review, a claim. A model can read it, but some of its answers will be wrong. Clorian puts a threshold on every answer and records what people decide, so automation grows with the evidence instead of on faith.</p>
       <div class="three">
         <div>
           <h3><span class="dot" style="background:var(--accepted)"></span>Accepted</h3>
@@ -253,6 +270,135 @@
         <li><strong>Calibration from real reviews.</strong> <code>clorian:stats</code> shows how often people agreed with Jev at each confidence, and suggests where the threshold can move.</li>
         <li><strong>Private by default.</strong> Personal data is redacted before anything leaves your app, and stored input is encrypted.</li>
       </ul>
+    </div>
+  </section>
+
+  <section id="use-cases">
+    <div class="wrap">
+      <h2>Use cases</h2>
+      <p>Anything your app saves as text can be weighed. A policy asks the questions; these are a few of the shapes it takes.</p>
+      <div class="uses">
+        <div class="card">
+          <h3>Support tickets</h3>
+          <p class="soft">Route to the right team, set urgency, and make sure "critical" is always confirmed by a person.</p>
+          <pre><code>Question::choice(<span class="s">'team'</span>, [<span class="s">'billing'</span>, <span class="s">'bug'</span>, <span class="s">'account'</span>]),
+Question::choice(<span class="s">'urgency'</span>, [<span class="s">'low'</span>, <span class="s">'high'</span>, <span class="s">'critical'</span>])
+    ->option(<span class="s">'critical'</span>, fn ($o) => $o->alwaysReview()),</code></pre>
+        </div>
+        <div class="card">
+          <h3>Marketplace listings</h3>
+          <p class="soft">Put listings in the right category, and hold anything that might be prohibited for a person.</p>
+          <pre><code>Question::choice(<span class="s">'category'</span>, [
+    <span class="s">'electronics'</span>, <span class="s">'home'</span>, <span class="s">'fashion'</span>,
+]),
+Question::boolean(<span class="s">'prohibited'</span>)->alwaysReview(),</code></pre>
+        </div>
+        <div class="card">
+          <h3>Reviews and comments</h3>
+          <p class="soft">Hide spam, mark off-topic posts, and pull out what the customer is actually unhappy about.</p>
+          <pre><code>Question::boolean(<span class="s">'spam'</span>)->accept(0.95),
+Question::choice(<span class="s">'complaint'</span>, [
+    <span class="s">'delivery'</span>, <span class="s">'quality'</span>, <span class="s">'price'</span>, <span class="s">'none'</span>,
+]),</code></pre>
+        </div>
+        <div class="card">
+          <h3>Refunds and claims</h3>
+          <p class="soft">Approve the routine ones automatically and send the unusual ones to a manager.</p>
+          <pre><code>Question::choice(<span class="s">'reason'</span>, [
+    <span class="s">'damaged'</span>, <span class="s">'late'</span>, <span class="s">'changed_mind'</span>,
+]),
+Question::boolean(<span class="s">'needs_manager'</span>)->accept(0.80),</code></pre>
+        </div>
+        <div class="card">
+          <h3>Contact forms and leads</h3>
+          <p class="soft">Answered while the visitor waits with <code>Clorian::now()</code>: send sales to sales, password problems to the help page, spam to nowhere.</p>
+          <pre><code>Question::choice(<span class="s">'intent'</span>, [
+    <span class="s">'sales'</span>, <span class="s">'support'</span>, <span class="s">'account_access'</span>, <span class="s">'spam'</span>,
+]),</code></pre>
+        </div>
+        <div class="card">
+          <h3>Content tagging</h3>
+          <p class="soft">Tag posts, documents or products by topic and audience, so search and feeds stay tidy without manual sorting.</p>
+          <pre><code>Question::choice(<span class="s">'topic'</span>, [
+    <span class="s">'security'</span>, <span class="s">'billing'</span>, <span class="s">'release'</span>,
+]),
+Question::choice(<span class="s">'audience'</span>, [<span class="s">'beginner'</span>, <span class="s">'advanced'</span>]),</code></pre>
+        </div>
+      </div>
+      <p class="soft">For decisions about people, such as access to a service, keep a person in the loop: <code>alwaysReview()</code> on the question means Clorian suggests and a human decides.</p>
+    </div>
+  </section>
+
+  <section id="how-it-works">
+    <div class="wrap">
+      <h2>How it works</h2>
+      <p>Mark a model, write a policy, and Clorian takes it from there. The flow is the same for any model; here it is with a support ticket:</p>
+      <ol class="plain">
+        <li><strong>The ticket is saved.</strong> The <code>HasWeighings</code> trait has already registered Clorian's model listener, so there is nothing to wire up.</li>
+        <li><strong>Clorian queues a job</strong> once the save commits. In sync mode it weighs during the save instead.</li>
+        <li><strong>The <code>#[Weigh]</code> fields are redacted and sent to Jev</strong> with every question in your policy, in one call.</li>
+        <li><strong>Jev returns a probability for every option.</strong> Say billing 0.98, normal urgency 0.71, needs a person 0.95.</li>
+        <li><strong>Each answer is checked against its thresholds.</strong> Billing is accepted (above 0.90), the urgency goes to a person (between 0.60 and 0.90), needs a person is accepted.</li>
+        <li><strong>Your policy's <code>apply()</code> runs</strong> with the accepted answers and your defaults for the rest: the ticket moves to the billing queue, and its priority stays normal until someone confirms it.</li>
+        <li><strong>Events fire</strong>: <code>AnswerAccepted</code> twice and <code>AnswerNeedsReview</code> once, for any listeners you have.</li>
+        <li><strong>A person reviews the urgency</strong> and changes it to high. <code>apply()</code> runs again with their decision.</li>
+        <li><strong>Over time</strong>, <code>clorian:stats</code> shows how often people agreed with Jev at each confidence, and <code>clorian:tune</code> lets Jev decide more once the evidence is there.</li>
+      </ol>
+
+      <h3>Where your code goes</h3>
+      <div class="table-scroll">
+        <table>
+          <thead><tr><th>You want to</th><th>Write</th><th>Who calls it</th></tr></thead>
+          <tbody>
+            <tr><td>Weigh a model when it is saved</td><td><code>#[Weigh(...)]</code> and <code>use HasWeighings</code></td><td>Clorian, on every create and on changes to those fields</td></tr>
+            <tr><td>Change the model from the answers (queue, priority, flags)</td><td>Your policy's <code>apply()</code></td><td>Clorian, after every weighing and every review</td></tr>
+            <tr><td>Notify, page someone, send a reply</td><td>An event listener</td><td>Laravel, when Clorian fires the event. Optional: write one only if you need it</td></tr>
+            <tr><td>Decide about data with no model (a contact form, an API call)</td><td><code>Clorian::now()</code></td><td>You, where the data arrives</td></tr>
+            <tr><td>Let people review answers</td><td>Your own screen, calling <code>Clorian::review()</code></td><td>You. Clorian is headless: it records decisions, you show them</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Keep <code>apply()</code> repeatable</h3>
+      <p><code>apply()</code> runs after the first weighing, again after every review, and again on <code>weighNow()</code> and <code>clorian:rescan</code>. Make it set values (a queue, a priority) so running it twice changes nothing. Put anything that must happen once, such as an email, in a listener instead.</p>
+
+      <h3>React with a listener</h3>
+      <p>A plain Laravel listener; Laravel finds it in <code>app/Listeners</code> by the type-hinted event. Events fire after the save commits and carry ids and values, never the content. "Critical" always goes to a person in the policy below, so this pages someone to look straight away:</p>
+      <pre><code><span class="k">namespace</span> App\Listeners;
+
+<span class="k">use</span> App\Clorian\TicketTriage;
+<span class="k">use</span> App\Models\Ticket;
+<span class="k">use</span> App\Notifications\CriticalTicketWaiting;
+<span class="k">use</span> Illuminate\Support\Facades\Notification;
+<span class="k">use</span> Phoenix1331\Clorian\Events\AnswerNeedsReview;
+
+<span class="k">class</span> PageOnCallForCriticalTickets
+{
+    <span class="k">public function</span> handle(AnswerNeedsReview $event): void
+    {
+        <span class="k">if</span> ($event->policy !== TicketTriage::<span class="k">class</span> || $event->question !== <span class="s">'urgency'</span> || $event->value !== <span class="s">'critical'</span>) {
+            <span class="k">return</span>;
+        }
+
+        Notification::route(<span class="s">'mail'</span>, <span class="s">'oncall@example.com'</span>)
+            ->notify(<span class="k">new</span> CriticalTicketWaiting(Ticket::find($event->subjectId)));
+    }
+}</code></pre>
+
+      <h3>List what needs reviewing</h3>
+      <pre><code><span class="k">use</span> Phoenix1331\Clorian\Resolution\Status;
+
+$tickets = Ticket::pendingReview()->with(<span class="s">'latestWeighing.answers'</span>)->get();
+
+<span class="k">foreach</span> ($tickets <span class="k">as</span> $ticket) {
+    <span class="k">foreach</span> ($ticket->latestWeighing->answers <span class="k">as</span> $answer) {
+        <span class="k">if</span> ($answer->status === Status::Review &amp;&amp; ! $answer->isReviewed()) {
+            <span class="c">// Show $answer->question, $answer->value and $answer->confidence,</span>
+            <span class="c">// with buttons that call Clorian::review($answer, ...)</span>
+        }
+    }
+}</code></pre>
+      <p class="soft">In queued mode, weighing happens on your queue, so run a worker (<code>php artisan queue:work</code>) as you would for any queued job. Until it runs, the model keeps its defaults.</p>
     </div>
   </section>
 
@@ -291,7 +437,7 @@ $weighing = Clorian::now(ContactIntent::<span class="k">class</span>, $request->
   <section id="policies">
     <div class="wrap">
       <h2>Policies</h2>
-      <p>A policy declares typed questions, what to use when an answer cannot be trusted, and what to do with the result. It is resolved from the container, so constructor injection works.</p>
+      <p>A policy declares typed questions, what to use when an answer cannot be trusted, and what to do with the result. It is resolved from the container, so constructor injection works. The ticket policy below is the one the rest of these docs use:</p>
       <pre><code><span class="k">use</span> Phoenix1331\Clorian\Policies\Policy;
 <span class="k">use</span> Phoenix1331\Clorian\Questions\Question;
 <span class="k">use</span> Phoenix1331\Clorian\Questions\ThresholdOverrides;
@@ -392,8 +538,8 @@ php artisan clorian:tune <span class="s">'App\Clorian\TicketTriage'</span> urgen
 
   <section id="example">
     <div class="wrap">
-      <h2>Example: ticket triage</h2>
-      <p>Clorian is headless; these come from a demo app built on it with the policy above and 40 support tickets weighed by Jev. The overview shows where every answer landed. Each answer sits on its scale: the star is Jev's confidence, the ticks are the thresholds.</p>
+      <h2>Example: support ticket triage</h2>
+      <p>One worked example. Clorian is headless; these come from a demo app built on it with the ticket policy above and 40 support tickets weighed by Jev. The overview shows where every answer landed. Each answer sits on its scale: the star is Jev's confidence, the ticks are the thresholds.</p>
       <figure>
         <img src="screenshots/overview.png" alt="The demo's overview: 68 answers accepted and applied, 7 waiting for a person, 19 unresolved, with a bar per question and the latest weighings on their scales." width="1425" height="900" loading="lazy">
         <figcaption>Every answer, weighed: accepted, waiting for a person, or left to the defaults.</figcaption>
@@ -558,7 +704,17 @@ Clorian::extend(<span class="s">'mine'</span>, fn ($app, array $config) => <span
 
     // The same rule as ThresholdResolver: reaching a threshold counts.
     var el = function (id) { return document.getElementById(id); };
-    var confidence = el('confidence'), review = el('review'), accept = el('accept'), always = el('always');
+    var confidence = el('confidence'), review = el('review'), accept = el('accept'), always = el('always'), example = el('scale-example');
+
+    // What each example's policy would do with the answer.
+    var EXAMPLES = {
+      ticket: { title: 'Support ticket: urgency', answer: 'high', act: 'apply() sets the ticket\'s priority to high straight away.', fallback: 'normal priority' },
+      listing: { title: 'Marketplace listing: category', answer: 'electronics', act: 'The listing goes live under Electronics.', fallback: 'uncategorised' },
+      review: { title: 'Product review: spam', answer: 'yes', act: 'The review is hidden from the product page.', fallback: 'shown' },
+      refund: { title: 'Refund request: needs a manager', answer: 'yes', act: 'The refund waits for a manager instead of paying out.', fallback: 'standard approval' },
+      lead: { title: 'Contact form: intent', answer: 'sales', act: 'The message goes straight to the sales inbox.', fallback: 'the support inbox' },
+      article: { title: 'Blog post: topic', answer: 'security', act: 'The post is tagged Security and joins that feed.', fallback: 'untagged' }
+    };
     var css = getComputedStyle(document.documentElement);
 
     function pct(v) { return Math.min(100, Math.max(0, v)) + '%'; }
@@ -599,14 +755,17 @@ Clorian::extend(<span class="s">'mine'</span>, fn ($app, array $config) => <span
 
       var verdict = el('verdict');
       verdict.className = 'verdict v-' + status;
+      var ex = EXAMPLES[example.value] || EXAMPLES.ticket;
+      el('scale-title').textContent = ex.title;
+      el('scale-answer').textContent = ex.answer;
       verdict.innerHTML = {
-        accepted: '<strong>Accepted</strong>apply() sets the urgency to high straight away.',
-        review: '<strong>Sent to review</strong>The default (normal) holds until a person decides.',
-        unresolved: '<strong>Unresolved</strong>The default (normal) applies; the answer is kept for the stats.'
+        accepted: '<strong>Accepted</strong>' + ex.act,
+        review: '<strong>Sent to review</strong>The default (' + ex.fallback + ') holds until a person decides.',
+        unresolved: '<strong>Unresolved</strong>The default (' + ex.fallback + ') applies; the answer is kept for the stats.'
       }[status];
     }
 
-    [confidence, review, accept, always].forEach(function (input) { input.addEventListener('input', render); });
+    [confidence, review, accept, always, example].forEach(function (input) { input.addEventListener('input', render); });
     render.call(null);
   })();
 </script>
