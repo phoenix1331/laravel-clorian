@@ -104,9 +104,9 @@ final class Clorian
 
         $weighing = $this->store($policy, $driver, $input, $subject, $scores, $resolved, [
             'input' => $storage->stores($subject !== null) ? self::snapshot($content) : null,
-        ]);
+        ], $this->previousReviews($policy, $input, $subject));
 
-        $instance->apply($subject, $resolved->values($this->policies->defaults($instance)));
+        $instance->apply($subject, $this->values($weighing->answers, $instance));
 
         $this->announce($weighing, $resolved);
 
@@ -274,10 +274,21 @@ final class Clorian
             return;
         }
 
+        $policy->apply($subject, $this->values($weighing->answers()->get(), $policy));
+    }
+
+    /**
+     * What apply() receives: reviewed values, then accepted answers, then
+     * the policy's defaults. Answers to questions the policy dropped are ignored.
+     *
+     * @param  iterable<WeighingAnswer>  $answers
+     */
+    private function values(iterable $answers, Policy $policy): Answers
+    {
         $questions = $this->policies->questions($policy);
         $values = $this->policies->defaults($policy);
 
-        foreach ($weighing->answers()->get() as $answer) {
+        foreach ($answers as $answer) {
             $question = $questions[$answer->question] ?? null;
 
             if (! $question instanceof Question) {
@@ -295,7 +306,59 @@ final class Clorian
             }
         }
 
-        $policy->apply($subject, new Answers($values));
+        return new Answers($values);
+    }
+
+    /**
+     * Human decisions on the subject's latest complete weighing, when the
+     * content has not changed since: a re-weigh of the same content (rescan,
+     * weighNow) must never undo them.
+     *
+     * @param  string|array<string, mixed>  $input
+     * @return array<string, WeighingAnswer> question => reviewed answer
+     */
+    private function previousReviews(string $policy, string|array $input, ?Model $subject): array
+    {
+        if ($subject === null) {
+            return [];
+        }
+
+        $previous = Weighing::query()
+            ->whereMorphedTo('subject', $subject)
+            ->where('policy', $policy)
+            ->where('status', WeighingStatus::Complete)
+            ->latest('id')
+            ->first();
+
+        if ($previous === null || $previous->content_hash !== self::hash($input)) {
+            return [];
+        }
+
+        return $previous->answers()->whereNotNull('review_action')->get()
+            ->keyBy(static fn (WeighingAnswer $answer): string => $answer->question)
+            ->all();
+    }
+
+    /**
+     * Copy a human decision onto a new answer to the same content. The
+     * action is judged against the new answer, so calibration stays honest:
+     * the reviewer's value matching it is upheld, differing is overturned.
+     */
+    private static function carry(WeighingAnswer $from, WeighingAnswer $to): void
+    {
+        $action = match (true) {
+            $from->review_action === ReviewAction::Missed => ReviewAction::Missed,
+            $from->reviewed_value === $to->value => ReviewAction::Upheld,
+            default => ReviewAction::Overturned,
+        };
+
+        $to->forceFill([
+            'review_action' => $action,
+            'reviewed_value' => $from->reviewed_value,
+            'reviewer_type' => $from->reviewer_type,
+            'reviewer_id' => $from->reviewer_id,
+            'reviewed_at' => $from->reviewed_at,
+        ])->save();
     }
 
     /**
@@ -375,10 +438,11 @@ final class Clorian
     /**
      * @param  string|array<string, mixed>  $input
      * @param  array<string, mixed>  $attributes
+     * @param  array<string, WeighingAnswer>  $reviews  question => the human decision to carry over
      */
-    private function store(string $policy, Driver $driver, string|array $input, ?Model $subject, Scores $scores, ResolvedAnswers $resolved, array $attributes): Weighing
+    private function store(string $policy, Driver $driver, string|array $input, ?Model $subject, Scores $scores, ResolvedAnswers $resolved, array $attributes, array $reviews): Weighing
     {
-        return (new Weighing)->getConnection()->transaction(function () use ($policy, $driver, $input, $subject, $scores, $resolved, $attributes): Weighing {
+        return (new Weighing)->getConnection()->transaction(function () use ($policy, $driver, $input, $subject, $scores, $resolved, $attributes, $reviews): Weighing {
             $weighing = $this->record($policy, $driver, $input, $subject, [
                 ...$attributes,
                 'status' => WeighingStatus::Complete,
@@ -396,6 +460,12 @@ final class Clorian
                 'status' => $answer->status,
             ], $resolved->all())));
 
+            foreach ($answers as $answer) {
+                if (isset($reviews[$answer->question])) {
+                    self::carry($reviews[$answer->question], $answer);
+                }
+            }
+
             $weighing->setRelation('answers', $answers);
 
             return $weighing;
@@ -404,7 +474,7 @@ final class Clorian
 
     /**
      * AnswerAccepted and AnswerNeedsReview for each answer; unresolved
-     * answers are only recorded.
+     * answers and carried human decisions are only recorded.
      */
     private function announce(Weighing $weighing, ResolvedAnswers $resolved): void
     {
@@ -413,7 +483,8 @@ final class Clorian
         foreach ($resolved->all() as $answer) {
             $row = $stored->get($answer->question);
 
-            if (! $row instanceof WeighingAnswer || $answer->status === Status::Unresolved) {
+            // Carried human decisions are not news: nothing to accept or review.
+            if (! $row instanceof WeighingAnswer || $row->isReviewed() || $answer->status === Status::Unresolved) {
                 continue;
             }
 

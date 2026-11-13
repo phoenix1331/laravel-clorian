@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('priority')->nullable();
             $table->boolean('needs_human')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

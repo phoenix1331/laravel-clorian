@@ -110,9 +110,12 @@ return [
     | Pruning
     |--------------------------------------------------------------------------
     |
-    | clorian:prune deletes weighings older than weighings_after_days and
-    | clears stored input older than inputs_after_days, so stats survive
-    | longer than content.
+    | clorian:prune deletes weighings older than weighings_after_days, clears
+    | stored input older than inputs_after_days (so stats outlive content)
+    | and deletes weighings whose subject no longer exists. Null keeps
+    | forever. Schedule it in routes/console.php:
+    |
+    |     Schedule::command('clorian:prune')->daily();
     |
     */
 
