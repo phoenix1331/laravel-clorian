@@ -77,13 +77,14 @@ it('asserts a policy was weighed, for a subject or a callback', function (): voi
 it('counts weighings per policy', function (): void {
     Clorian::fake();
 
-    Clorian::now(ContactIntent::class, 'One');
+    // Ids from the weighing itself: MySQL and PostgreSQL do not restart them per test.
+    $first = Clorian::now(ContactIntent::class, 'One');
     Clorian::now(ContactIntent::class, 'Two');
     Clorian::now(TicketTriage::class, 'Three');
 
     Clorian::assertWeighedTimes(ContactIntent::class, 2);
     Clorian::assertWeighedTimes(TicketTriage::class, 1);
-    Clorian::assertWeighedTimes(ContactIntent::class, 1, fn (Weighing $w): bool => $w->id === 1);
+    Clorian::assertWeighedTimes(ContactIntent::class, 1, fn (Weighing $w): bool => $w->id === $first->id);
 
     expect(Clorian::weighings())->toHaveCount(3)
         ->and(Clorian::weighings(ContactIntent::class))->toHaveCount(2)

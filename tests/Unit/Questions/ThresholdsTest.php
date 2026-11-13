@@ -38,6 +38,8 @@ it('explains invalid thresholds', function (?float $accept, float $review, strin
     'accept below 0' => [-0.1, 0.0, 'accept must be between 0 and 1, got -0.1'],
     'review above 1' => [null, 1.5, 'review must be between 0 and 1, got 1.5'],
     'review below 0' => [0.9, -0.25, 'review must be between 0 and 1, got -0.25'],
+    'accept NAN' => [NAN, 0.6, 'accept must be between 0 and 1, got NAN'],
+    'review NAN' => [0.9, NAN, 'review must be between 0 and 1, got NAN'],
 ]);
 
 it('layers overrides over the values below', function (): void {

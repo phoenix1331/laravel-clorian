@@ -48,8 +48,9 @@ final class FakeDriver implements Driver
      */
     public function answer(string $question, string|bool $value, float $probability): self
     {
-        if ($probability < 0.0 || $probability > 1.0) {
-            throw new InvalidArgumentException(sprintf('The probability for [%s] must be between 0 and 1, got %s.', $question, $probability));
+        // Negated so NAN, which fails every comparison, is rejected too.
+        if (! ($probability >= 0.0 && $probability <= 1.0)) {
+            throw new InvalidArgumentException(sprintf('The probability for [%s] must be between 0 and 1, got %s.', $question, is_nan($probability) ? 'NAN' : (string) $probability));
         }
 
         $this->answers[$question] = ['value' => self::option($value), 'probability' => $probability];

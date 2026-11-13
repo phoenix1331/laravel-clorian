@@ -109,8 +109,9 @@ final readonly class Scores
             }
 
             foreach ($scored as $option => $probability) {
-                if ($probability < 0.0 || $probability > 1.0 || is_nan($probability)) {
-                    throw DriverException::unexpected($driver, sprintf('question [%s] option [%s] has probability %s, outside 0 to 1', $name, $option, $probability), requestId: $this->requestId);
+                // Negated so NAN, which fails every comparison, is rejected too.
+                if (! ($probability >= 0.0 && $probability <= 1.0)) {
+                    throw DriverException::unexpected($driver, sprintf('question [%s] option [%s] has probability %s, outside 0 to 1', $name, $option, is_nan($probability) ? 'NAN' : (string) $probability), requestId: $this->requestId);
                 }
             }
         }

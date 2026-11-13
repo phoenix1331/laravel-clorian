@@ -34,8 +34,9 @@ final readonly class Calibrator
         public int $minSample = self::DEFAULT_MIN_SAMPLE,
         public array $bands = self::DEFAULT_BANDS,
     ) {
-        if ($target <= 0.0 || $target > 1.0) {
-            throw new InvalidArgumentException(sprintf('The calibration target must be above 0 and at most 1, got %s.', $target));
+        // Negated so NAN, which fails every comparison, is rejected too.
+        if (! ($target > 0.0 && $target <= 1.0)) {
+            throw new InvalidArgumentException(sprintf('The calibration target must be above 0 and at most 1, got %s.', is_nan($target) ? 'NAN' : (string) $target));
         }
 
         if ($minSample < 1) {

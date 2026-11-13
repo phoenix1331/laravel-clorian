@@ -85,9 +85,13 @@ it('rejects scores with missing or unknown options', function (array $options, s
     'unknown' => [['billing' => 0.25, 'bug' => 0.25, 'account' => 0.25, 'feature' => 0.2, 'sales' => 0.05], 'account, billing, bug, feature, sales'],
 ]);
 
-it('rejects probabilities outside 0 to 1', function (float $probability): void {
+it('rejects probabilities outside 0 to 1', function (float $probability, string $shown): void {
     $scores = new Scores(['needs_human' => ['true' => $probability, 'false' => 0.5]]);
 
     expect(fn () => $scores->assertCovers(['needs_human' => Question::boolean('needs_human')], 'jev'))
-        ->toThrow(DriverException::class, 'question [needs_human] option [true] has probability');
-})->with([-0.01, 1.01, NAN]);
+        ->toThrow(DriverException::class, "question [needs_human] option [true] has probability {$shown}, outside 0 to 1");
+})->with([
+    'below 0' => [-0.01, '-0.01'],
+    'above 1' => [1.01, '1.01'],
+    'NAN, without coercing it to a string (a PHP 8.5 warning)' => [NAN, 'NAN'],
+]);

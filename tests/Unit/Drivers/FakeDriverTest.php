@@ -98,10 +98,14 @@ it('rejects a value that is not an option', function (): void {
         ->toThrow(InvalidArgumentException::class, '[urgent] is not an option of question [urgency]. Options: low, normal, high, critical.');
 });
 
-it('rejects a probability outside 0 to 1', function (): void {
-    expect(fn () => (new FakeDriver)->answer('urgency', 'high', 1.2))
-        ->toThrow(InvalidArgumentException::class, 'The probability for [urgency] must be between 0 and 1, got 1.2.');
-});
+it('rejects a probability outside 0 to 1', function (float $probability, string $shown): void {
+    expect(fn () => (new FakeDriver)->answer('urgency', 'high', $probability))
+        ->toThrow(InvalidArgumentException::class, "The probability for [urgency] must be between 0 and 1, got {$shown}.");
+})->with([
+    'above 1' => [1.2, '1.2'],
+    'below 0' => [-0.1, '-0.1'],
+    'NAN' => [NAN, 'NAN'],
+]);
 
 it('validates hand-written distributions like any driver', function (): void {
     expect(fn () => scoreWith((new FakeDriver)->distribution('urgency', ['low' => 1.0])))

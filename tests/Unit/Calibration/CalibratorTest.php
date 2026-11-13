@@ -231,6 +231,8 @@ it('rejects settings it cannot use', function (float $target, int $minSample, ar
 })->with([
     'zero target' => [0.0, 30, Calibrator::DEFAULT_BANDS, 'The calibration target must be above 0 and at most 1, got 0.'],
     'target over 1' => [1.5, 30, Calibrator::DEFAULT_BANDS, 'got 1.5'],
+    'NAN target' => [NAN, 30, Calibrator::DEFAULT_BANDS, 'The calibration target must be above 0 and at most 1, got NAN.'],
+    'NAN band' => [0.95, 30, [0.6, NAN], 'Calibration bands must be ascending'],
     'no sample' => [0.95, 0, Calibrator::DEFAULT_BANDS, 'The calibration min_sample must be at least 1, got 0.'],
     'no bands' => [0.95, 30, [], 'Calibration bands must be ascending'],
     'descending' => [0.95, 30, [0.8, 0.6], 'Calibration bands must be ascending'],

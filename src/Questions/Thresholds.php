@@ -52,7 +52,8 @@ final readonly class Thresholds
      */
     public function problem(): ?string
     {
-        if ($this->review < 0.0 || $this->review > 1.0) {
+        // Negated so NAN, which fails every comparison, is rejected too.
+        if (! ($this->review >= 0.0 && $this->review <= 1.0)) {
             return sprintf('review must be between 0 and 1, got %s', self::format($this->review));
         }
 
@@ -60,7 +61,7 @@ final readonly class Thresholds
             return null;
         }
 
-        if ($this->accept < 0.0 || $this->accept > 1.0) {
+        if (! ($this->accept >= 0.0 && $this->accept <= 1.0)) {
             return sprintf('accept must be between 0 and 1, got %s', self::format($this->accept));
         }
 
@@ -73,6 +74,10 @@ final readonly class Thresholds
 
     private static function format(float $value): string
     {
+        if (is_nan($value)) {
+            return 'NAN';
+        }
+
         return rtrim(rtrim(number_format($value, self::PRECISION, '.', ''), '0'), '.');
     }
 }
