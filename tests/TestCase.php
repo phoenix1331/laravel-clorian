@@ -25,6 +25,15 @@ abstract class TestCase extends Orchestra
         ];
     }
 
+    /**
+     * Models are not weighed on save unless a test turns it on, so creating
+     * a fixture never calls a driver by accident.
+     */
+    protected function defineEnvironment($app): void
+    {
+        $app->make('config')->set('clorian.enabled', false);
+    }
+
     protected function defineDatabaseMigrations(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');

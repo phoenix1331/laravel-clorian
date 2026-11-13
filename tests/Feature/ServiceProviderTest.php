@@ -3,10 +3,13 @@
 declare(strict_types=1);
 
 use Illuminate\Support\ServiceProvider;
+use Phoenix1331\Clorian\Clorian;
 use Phoenix1331\Clorian\ClorianServiceProvider;
 
 it('merges the package config', function (): void {
-    expect(config('clorian.enabled'))->toBeTrue()
+    // TestCase turns weighing on save off; the shipped default is on.
+    expect((require __DIR__.'/../../config/clorian.php')['enabled'])->toBeTrue()
+        ->and(config('clorian.enabled'))->toBeFalse()
         ->and(config('clorian.driver'))->toBe('jev')
         ->and(config('clorian.mode'))->toBe('queued')
         ->and(config('clorian.queue'))->toBe('default')
@@ -14,6 +17,10 @@ it('merges the package config', function (): void {
         ->and(config('clorian.store_input'))->toBe('subjectless')
         ->and(config('clorian.default_thresholds'))->toBe(['accept' => 0.90, 'review' => 0.60])
         ->and(config('clorian.prune'))->toBe(['weighings_after_days' => 90, 'inputs_after_days' => 30]);
+});
+
+it('registers the manager as a singleton under the facade alias', function (): void {
+    expect(app('clorian'))->toBe(app(Clorian::class));
 });
 
 it('reads the jev driver settings shared with laravel-jev-moderation', function (): void {

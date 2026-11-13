@@ -18,6 +18,7 @@ class ClorianServiceProvider extends ServiceProvider
 
         $this->app->singleton(PolicyRegistry::class);
         $this->app->singleton(Clorian::class);
+        $this->app->alias(Clorian::class, Clorian::ALIAS);
         // One instance, so tests and demos can script the driver Clorian uses.
         $this->app->singleton(FakeDriver::class);
         $this->app->bind(TunedThresholds::class, EloquentTunedThresholds::class);

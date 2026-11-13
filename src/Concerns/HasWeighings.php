@@ -4,20 +4,17 @@ declare(strict_types=1);
 
 namespace Phoenix1331\Clorian\Concerns;
 
-use BackedEnum;
-use DateTimeInterface;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
-use Phoenix1331\Clorian\Attributes\Weigh;
 use Phoenix1331\Clorian\Clorian;
 use Phoenix1331\Clorian\Models\Weighing;
 use Phoenix1331\Clorian\Models\WeighingAnswer;
+use Phoenix1331\Clorian\Observers\WeighObserver;
 use Phoenix1331\Clorian\Resolution\Status;
-use Stringable;
-use UnitEnum;
+use Phoenix1331\Clorian\Support\Weighable;
 
 /**
  * For Eloquent models with a #[Weigh] attribute: their weighings, the
@@ -27,6 +24,16 @@ use UnitEnum;
  */
 trait HasWeighings
 {
+    /**
+     * Weigh the model whenever its #[Weigh] fields change.
+     */
+    public static function bootHasWeighings(): void
+    {
+        // Listeners, not observe(): observe() builds a model while this one is still booting.
+        static::created(static fn (Model $model) => Container::getInstance()->make(WeighObserver::class)->created($model));
+        static::updated(static fn (Model $model) => Container::getInstance()->make(WeighObserver::class)->updated($model));
+    }
+
     /**
      * @return MorphMany<Weighing, $this>
      */
@@ -70,7 +77,7 @@ trait HasWeighings
      */
     public function weighPolicy(): string
     {
-        return Weigh::of($this)->policy;
+        return Weighable::policy($this);
     }
 
     /**
@@ -81,21 +88,7 @@ trait HasWeighings
      */
     public function weighInput(): array
     {
-        $input = [];
-
-        foreach (Weigh::of($this)->fields as $field) {
-            $value = $this->getAttribute($field);
-
-            $input[$field] = match (true) {
-                $value instanceof BackedEnum => $value->value,
-                $value instanceof UnitEnum => $value->name,
-                $value instanceof DateTimeInterface => $value->format(DateTimeInterface::ATOM),
-                $value instanceof Stringable => (string) $value,
-                default => $value,
-            };
-        }
-
-        return $input;
+        return Weighable::input($this);
     }
 
     /**

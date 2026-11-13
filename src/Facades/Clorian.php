@@ -53,8 +53,12 @@ final class Clorian extends Facade
         return $fake;
     }
 
+    /**
+     * An alias, not the class: swap() rebinds the accessor, and fake() must
+     * not replace the manager that jobs and observers resolve by type.
+     */
     protected static function getFacadeAccessor(): string
     {
-        return Manager::class;
+        return Manager::ALIAS;
     }
 }

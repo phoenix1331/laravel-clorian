@@ -32,6 +32,9 @@ use Phoenix1331\Clorian\Resolution\TunedThresholds;
  */
 final class Clorian
 {
+    /** The container alias the facade resolves. */
+    public const string ALIAS = 'clorian';
+
     /** @var array<string, Closure(Container, array<mixed>): Driver> */
     private array $extensions = [];
 
@@ -54,32 +57,72 @@ final class Clorian
      */
     public function now(string $policy, string|array $input, ?Model $subject = null): Weighing
     {
+        try {
+            return $this->weigh($policy, $input, $subject, $this->syncTimeout());
+        } catch (DriverException $e) {
+            return $this->failed($policy, $input, $subject, $e->getMessage());
+        }
+    }
+
+    /**
+     * Weigh, letting driver failures through so a job can retry them.
+     *
+     * @internal used by WeighSubject; call now() instead
+     *
+     * @param  string|array<string, mixed>  $input
+     * @param  float|null  $timeout  seconds; null uses the driver's own setting
+     *
+     * @throws DriverException
+     * @throws InvalidThresholds
+     */
+    public function weigh(string $policy, string|array $input, ?Model $subject = null, ?float $timeout = null): Weighing
+    {
         $instance = $this->policies->get($policy);
         $questions = $this->policies->questions($instance);
-        $defaults = $this->policies->defaults($instance);
         $driver = $this->driver();
 
-        try {
-            $scores = $driver->score($questions, $input, $instance->context($subject), $this->syncTimeout());
-        } catch (DriverException $e) {
-            $weighing = $this->record($policy, $driver, $input, $subject, [
-                'status' => WeighingStatus::Failed,
-                'error' => $e->getMessage(),
-            ]);
-
-            $instance->apply($subject, new Answers($defaults));
-
-            return $weighing;
-        }
+        $scores = $driver->score($questions, $input, $instance->context($subject), $timeout);
 
         $resolved = (new ThresholdResolver($this->policies->defaultThresholds()))
             ->resolve($policy, $questions, $scores, $this->tuned->forPolicy($policy));
 
         $weighing = $this->store($policy, $driver, $input, $subject, $scores, $resolved);
 
-        $instance->apply($subject, $resolved->values($defaults));
+        $instance->apply($subject, $resolved->values($this->policies->defaults($instance)));
 
         return $weighing;
+    }
+
+    /**
+     * Store a failed weighing and apply the policy's defaults.
+     *
+     * @internal used by now() and WeighSubject's final failure
+     *
+     * @param  string|array<string, mixed>  $input
+     * @param  string  $error  never the content: driver messages are content-free
+     */
+    public function failed(string $policy, string|array $input, ?Model $subject, string $error): Weighing
+    {
+        $instance = $this->policies->get($policy);
+
+        $weighing = $this->record($policy, $this->driver(), $input, $subject, [
+            'status' => WeighingStatus::Failed,
+            'error' => $error,
+        ]);
+
+        $instance->apply($subject, new Answers($this->policies->defaults($instance)));
+
+        return $weighing;
+    }
+
+    /**
+     * The hash stored as content_hash, so unchanged content is not weighed again.
+     *
+     * @param  string|array<string, mixed>  $input
+     */
+    public static function hash(string|array $input): string
+    {
+        return hash('sha256', (string) json_encode($input));
     }
 
     /**
@@ -166,7 +209,7 @@ final class Clorian
         $weighing = new Weighing([
             'policy' => $policy,
             'driver' => $driver->name(),
-            'content_hash' => hash('sha256', (string) json_encode($input)),
+            'content_hash' => self::hash($input),
             ...$attributes,
         ]);
 
