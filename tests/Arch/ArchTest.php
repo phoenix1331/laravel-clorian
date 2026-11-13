@@ -75,6 +75,7 @@ $core = [
     'Phoenix1331\Clorian\Reviews',
     'Phoenix1331\Clorian\Exceptions',
     'Phoenix1331\Clorian\Drivers',
+    'Phoenix1331\Clorian\Attributes',
 ];
 
 foreach ($core as $namespace) {

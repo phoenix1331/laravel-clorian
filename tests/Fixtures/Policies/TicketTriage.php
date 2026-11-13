@@ -44,7 +44,7 @@ final class TicketTriage extends Policy
     {
         $subject?->update([
             'queue' => $answers->category ?? 'triage',
-            'priority' => $answers->urgency,
+            'priority' => $answers->get('urgency'),
         ]);
     }
 }
