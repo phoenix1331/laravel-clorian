@@ -107,6 +107,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Status column
+    |--------------------------------------------------------------------------
+    |
+    | For busy apps that query pending reviews often: php artisan
+    | clorian:add-column tickets adds an indexed clorian_status column
+    | (complete, review or failed) to your table. When enabled, it is kept in
+    | sync after every weighing and review, and pendingReview() reads it.
+    |
+    */
+
+    'status_column' => [
+        'enabled' => (bool) env('CLORIAN_STATUS_COLUMN', false),
+        'name' => 'clorian_status',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Pruning
     |--------------------------------------------------------------------------
     |

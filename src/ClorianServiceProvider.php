@@ -9,6 +9,7 @@ use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Phoenix1331\Clorian\Calibration\Calibrator;
 use Phoenix1331\Clorian\Calibration\Observations;
+use Phoenix1331\Clorian\Commands\AddColumnCommand;
 use Phoenix1331\Clorian\Commands\InstallCommand;
 use Phoenix1331\Clorian\Commands\PingCommand;
 use Phoenix1331\Clorian\Commands\PruneCommand;
@@ -18,6 +19,7 @@ use Phoenix1331\Clorian\Commands\TuneCommand;
 use Phoenix1331\Clorian\Drivers\FakeDriver;
 use Phoenix1331\Clorian\Policies\PolicyRegistry;
 use Phoenix1331\Clorian\Resolution\TunedThresholds;
+use Phoenix1331\Clorian\Support\StatusColumn;
 use Phoenix1331\Clorian\Tuning\EloquentObservations;
 use Phoenix1331\Clorian\Tuning\EloquentTunedThresholds;
 
@@ -32,6 +34,7 @@ class ClorianServiceProvider extends ServiceProvider
         $this->app->alias(Clorian::class, Clorian::ALIAS);
         // One instance, so tests and demos can script the driver Clorian uses.
         $this->app->singleton(FakeDriver::class);
+        $this->app->singleton(StatusColumn::class);
         $this->app->bind(TunedThresholds::class, EloquentTunedThresholds::class);
         $this->app->bind(Observations::class, EloquentObservations::class);
         $this->app->bind(Calibrator::class, static function (Application $app): Calibrator {
@@ -58,6 +61,7 @@ class ClorianServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
+                AddColumnCommand::class,
                 InstallCommand::class,
                 PingCommand::class,
                 PruneCommand::class,

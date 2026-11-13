@@ -38,6 +38,7 @@ use Phoenix1331\Clorian\Resolution\Status;
 use Phoenix1331\Clorian\Resolution\ThresholdResolver;
 use Phoenix1331\Clorian\Resolution\TunedThresholds;
 use Phoenix1331\Clorian\Reviews\ReviewAction;
+use Phoenix1331\Clorian\Support\StatusColumn;
 
 /**
  * Weighs input against a policy: one driver call, every answer resolved
@@ -57,6 +58,7 @@ final class Clorian
         private readonly Repository $config,
         private readonly PolicyRegistry $policies,
         private readonly TunedThresholds $tuned,
+        private readonly StatusColumn $statusColumn,
     ) {}
 
     /**
@@ -108,6 +110,10 @@ final class Clorian
 
         $instance->apply($subject, $this->values($weighing->answers, $instance));
 
+        if ($subject !== null) {
+            $this->statusColumn->sync($subject);
+        }
+
         $this->announce($weighing, $resolved);
 
         return $weighing;
@@ -133,6 +139,10 @@ final class Clorian
         ]);
 
         $instance->apply($subject, new Answers($this->policies->defaults($instance)));
+
+        if ($subject !== null) {
+            $this->statusColumn->sync($subject);
+        }
 
         $this->events()->dispatch(new WeighingFailed($weighing->id, $policy, $error, $weighing->subject_type, $weighing->subject_id));
 
@@ -168,6 +178,12 @@ final class Clorian
         ])->save();
 
         $this->reapply($weighing, $instance);
+
+        $subject = $weighing->subject;
+
+        if ($subject instanceof Model) {
+            $this->statusColumn->sync($subject);
+        }
 
         $this->events()->dispatch(new AnswerReviewed(
             $weighing->id,

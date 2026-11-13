@@ -36,7 +36,6 @@ final class RescanCommand extends Command
     public function handle(Clorian $clorian, Repository $config): int
     {
         $name = $this->argument('model');
-        $name = is_string($name) ? $name : '';
         $class = $this->modelClass($name);
 
         if ($class === null) {

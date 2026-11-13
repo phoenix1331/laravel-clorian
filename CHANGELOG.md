@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `Observations` contract with a database reader that streams stored answers in chunks, by policy and since a date
 - `clorian:install`: publishes the config and migrations, asks for the mode and whether to migrate (skipped with `--no-interaction`) and prints the `.env` keys
 - `clorian:ping`: one sample weighing through the configured driver, reporting the key (set or missing, never its value), the resolved model version, latency and request id, with a warning to pin `jev-latest`
+- `clorian:add-column {table}`: generates a migration for an indexed `clorian_status` column (`complete`, `review` or `failed`); with `clorian.status_column.enabled` (`CLORIAN_STATUS_COLUMN`, off by default) it is kept in sync after every weighing and review, without model events, and `pendingReview()` reads it
 - `clorian:rescan {model} {--since=} {--chunk=500} {--sync}`: weighs existing models again, queued or inline, in chunks
 - `clorian:prune {--pretend}`: deletes weighings past `weighings_after_days` and those of deleted subjects, and clears stored input past `inputs_after_days` while answers and stats stay; schedule it daily
 - Re-weighing unchanged content (`clorian:rescan`, `weighNow()`) keeps human review decisions: they carry onto the new answers, judged against the new answer, and `apply()` keeps using them

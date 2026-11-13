@@ -10,10 +10,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Phoenix1331\Clorian\Clorian;
+use Phoenix1331\Clorian\Models\SubjectStatus;
 use Phoenix1331\Clorian\Models\Weighing;
 use Phoenix1331\Clorian\Models\WeighingAnswer;
 use Phoenix1331\Clorian\Observers\WeighObserver;
 use Phoenix1331\Clorian\Resolution\Status;
+use Phoenix1331\Clorian\Support\StatusColumn;
 use Phoenix1331\Clorian\Support\Weighable;
 
 /**
@@ -98,6 +100,15 @@ trait HasWeighings
      */
     public function scopePendingReview(Builder $query): void
     {
+        // The indexed clorian_status column, when clorian:add-column added it and it is enabled.
+        $column = Container::getInstance()->make(StatusColumn::class)->for($query->getModel());
+
+        if ($column !== null) {
+            $query->where($query->qualifyColumn($column), SubjectStatus::Review->value);
+
+            return;
+        }
+
         $query->whereHas('latestWeighing.answers', fn (Builder $answers) => $answers
             ->where('status', Status::Review)
             ->whereNull('review_action'));

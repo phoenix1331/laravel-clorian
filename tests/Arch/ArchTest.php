@@ -129,6 +129,7 @@ arch('stored values are string-backed enums')
         'Phoenix1331\Clorian\Resolution\Status',
         'Phoenix1331\Clorian\Reviews\ReviewAction',
         'Phoenix1331\Clorian\Models\WeighingStatus',
+        'Phoenix1331\Clorian\Models\SubjectStatus',
         'Phoenix1331\Clorian\Redaction\InputStorage',
     ])
     ->toBeStringBackedEnums();
@@ -138,7 +139,10 @@ arch('models are final Eloquent models')
     ->classes()
     ->toBeFinal()
     ->toExtend('Illuminate\Database\Eloquent\Model')
-    ->ignoring('Phoenix1331\Clorian\Models\WeighingStatus');
+    ->ignoring([
+        'Phoenix1331\Clorian\Models\WeighingStatus',
+        'Phoenix1331\Clorian\Models\SubjectStatus',
+    ]);
 
 arch('exceptions are final and extend a standard exception')
     ->expect('Phoenix1331\Clorian\Exceptions')
