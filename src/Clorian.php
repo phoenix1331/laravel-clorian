@@ -10,6 +10,7 @@ use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
+use LogicException;
 use Phoenix1331\Clorian\Drivers\Driver;
 use Phoenix1331\Clorian\Drivers\FakeDriver;
 use Phoenix1331\Clorian\Drivers\JevDriver;
@@ -24,6 +25,7 @@ use Phoenix1331\Clorian\Models\WeighingAnswer;
 use Phoenix1331\Clorian\Models\WeighingStatus;
 use Phoenix1331\Clorian\Policies\Policy;
 use Phoenix1331\Clorian\Policies\PolicyRegistry;
+use Phoenix1331\Clorian\Redaction\InputStorage;
 use Phoenix1331\Clorian\Resolution\Answer;
 use Phoenix1331\Clorian\Resolution\Answers;
 use Phoenix1331\Clorian\Resolution\ResolvedAnswers;
@@ -86,14 +88,18 @@ final class Clorian
     {
         $instance = $this->policies->get($policy);
         $questions = $this->policies->questions($instance);
+        $storage = $this->inputStorage();
         $driver = $this->driver();
+        $content = $this->redact($instance, $input);
 
-        $scores = $driver->score($questions, $input, $instance->context($subject), $timeout);
+        $scores = $driver->score($questions, $content, $instance->redact($instance->context($subject)), $timeout);
 
         $resolved = (new ThresholdResolver($this->policies->defaultThresholds()))
             ->resolve($policy, $questions, $scores, $this->tuned->forPolicy($policy));
 
-        $weighing = $this->store($policy, $driver, $input, $subject, $scores, $resolved);
+        $weighing = $this->store($policy, $driver, $input, $subject, $scores, $resolved, [
+            'input' => $storage->stores($subject !== null) ? self::snapshot($content) : null,
+        ]);
 
         $instance->apply($subject, $resolved->values($this->policies->defaults($instance)));
 
@@ -113,10 +119,12 @@ final class Clorian
     public function failed(string $policy, string|array $input, ?Model $subject, string $error): Weighing
     {
         $instance = $this->policies->get($policy);
+        $stores = $this->inputStorage()->stores($subject !== null);
 
         $weighing = $this->record($policy, $this->driver(), $input, $subject, [
             'status' => WeighingStatus::Failed,
             'error' => $error,
+            'input' => $stores ? self::snapshot($this->redact($instance, $input)) : null,
         ]);
 
         $instance->apply($subject, new Answers($this->policies->defaults($instance)));
@@ -176,6 +184,45 @@ final class Clorian
         return $this;
     }
 
+    private function inputStorage(): InputStorage
+    {
+        return InputStorage::fromConfig($this->config->get('clorian.store_input'));
+    }
+
+    /**
+     * Policy::redact() works on arrays, so a string travels as ['content' => string].
+     *
+     * @param  string|array<string, mixed>  $input
+     * @return string|array<string, mixed>
+     *
+     * @throws LogicException when redact() loses a string input
+     */
+    private function redact(Policy $policy, string|array $input): string|array
+    {
+        if (is_array($input)) {
+            return $policy->redact($input);
+        }
+
+        $redacted = $policy->redact(['content' => $input])['content'] ?? null;
+
+        if (! is_string($redacted)) {
+            throw new LogicException(sprintf('%s::redact() must return "content" as a string when the input is a string.', $policy::class));
+        }
+
+        return $redacted;
+    }
+
+    /**
+     * The redacted input as stored: arrays as they are, a string as ['content' => string].
+     *
+     * @param  string|array<string, mixed>  $content
+     * @return array<string, mixed>
+     */
+    private static function snapshot(string|array $content): array
+    {
+        return is_string($content) ? ['content' => $content] : $content;
+    }
+
     private function syncTimeout(): ?float
     {
         $timeout = $this->config->get('clorian.sync_timeout');
@@ -185,11 +232,13 @@ final class Clorian
 
     /**
      * @param  string|array<string, mixed>  $input
+     * @param  array<string, mixed>  $attributes
      */
-    private function store(string $policy, Driver $driver, string|array $input, ?Model $subject, Scores $scores, ResolvedAnswers $resolved): Weighing
+    private function store(string $policy, Driver $driver, string|array $input, ?Model $subject, Scores $scores, ResolvedAnswers $resolved, array $attributes): Weighing
     {
-        return (new Weighing)->getConnection()->transaction(function () use ($policy, $driver, $input, $subject, $scores, $resolved): Weighing {
+        return (new Weighing)->getConnection()->transaction(function () use ($policy, $driver, $input, $subject, $scores, $resolved, $attributes): Weighing {
             $weighing = $this->record($policy, $driver, $input, $subject, [
+                ...$attributes,
                 'status' => WeighingStatus::Complete,
                 'model_version' => $scores->modelVersion,
                 'meta' => $scores->meta() === [] ? null : $scores->meta(),

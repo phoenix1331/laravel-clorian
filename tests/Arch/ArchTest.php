@@ -76,6 +76,7 @@ $core = [
     'Phoenix1331\Clorian\Exceptions',
     'Phoenix1331\Clorian\Drivers',
     'Phoenix1331\Clorian\Attributes',
+    'Phoenix1331\Clorian\Redaction',
 ];
 
 foreach ($core as $namespace) {
@@ -128,6 +129,7 @@ arch('stored values are string-backed enums')
         'Phoenix1331\Clorian\Resolution\Status',
         'Phoenix1331\Clorian\Reviews\ReviewAction',
         'Phoenix1331\Clorian\Models\WeighingStatus',
+        'Phoenix1331\Clorian\Redaction\InputStorage',
     ])
     ->toBeStringBackedEnums();
 

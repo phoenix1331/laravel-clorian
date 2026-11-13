@@ -6,6 +6,7 @@ namespace Phoenix1331\Clorian\Policies;
 
 use Illuminate\Database\Eloquent\Model;
 use Phoenix1331\Clorian\Questions\Question;
+use Phoenix1331\Clorian\Redaction\Redactor;
 use Phoenix1331\Clorian\Resolution\Answers;
 
 /**
@@ -43,14 +44,25 @@ abstract class Policy
     }
 
     /**
-     * Strip personal data from the input before anything leaves the app.
+     * Strip personal data before anything leaves the app. Runs on the input
+     * (a string input arrives as ['content' => string] and must stay a
+     * string) and again on context(). What it returns is what the driver
+     * sees and, per clorian.store_input, what is stored. The default
+     * replaces emails, phone numbers and long digit runs; call
+     * parent::redact() to keep that when adding your own.
      *
      * @param  array<string, mixed>  $input
      * @return array<string, mixed>
      */
     public function redact(array $input): array
     {
-        return $input;
+        $redacted = [];
+
+        foreach ((new Redactor)->redact($input) as $key => $value) {
+            $redacted[(string) $key] = $value;
+        }
+
+        return $redacted;
     }
 
     /**
