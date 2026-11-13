@@ -4,21 +4,25 @@ declare(strict_types=1);
 
 use Phoenix1331\Clorian\Clorian as Manager;
 use Phoenix1331\Clorian\Facades\Clorian;
+use Phoenix1331\Clorian\Testing\ClorianFake;
 
 /**
- * Method name => return type, from the facade's @method lines.
+ * Method name => [return type, parameter names], from the facade's @method lines.
  *
- * @return array<string, string>
+ * @return array<string, array{0: string, 1: list<string>}>
  */
 function facadeMethods(): array
 {
     $doc = (string) (new ReflectionClass(Clorian::class))->getDocComment();
-    preg_match_all('/@method\s+static\s+(\S+)\s+(\w+)\(/', $doc, $matches, PREG_SET_ORDER);
+    preg_match_all('/@method\s+static\s+(\S+)\s+(\w+)\(([^)]*)\)/', $doc, $matches, PREG_SET_ORDER);
 
     $methods = [];
 
-    foreach ($matches as [, $type, $name]) {
-        $methods[$name] = ltrim($type, '\\');
+    foreach ($matches as [, $type, $name, $parameters]) {
+        preg_match_all('/\$(\w+)/', $parameters, $names);
+        // Generics dropped: list<Weighing> is a native array.
+        $native = ltrim(preg_replace('/<.*>/', '', $type) ?? $type, '\\');
+        $methods[$name] = [$native === 'list' ? 'array' : $native, $names[1]];
     }
 
     ksort($methods);
@@ -27,21 +31,28 @@ function facadeMethods(): array
 }
 
 /**
- * Method name => return type, from the manager's public methods.
+ * Method name => [return type, parameter names] for a class's public API:
+ * no constructor, statics or @internal methods.
  *
- * @return array<string, string>
+ * @param  class-string  $class
+ * @return array<string, array{0: string, 1: list<string>}>
  */
-function managerMethods(): array
+function publicMethods(string $class): array
 {
     $methods = [];
 
-    foreach ((new ReflectionClass(Manager::class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-        if ($method->isConstructor() || $method->isStatic()) {
+    foreach ((new ReflectionClass($class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+        if ($method->isConstructor() || $method->isStatic() || str_contains((string) $method->getDocComment(), '@internal')) {
             continue;
         }
 
         $type = $method->getReturnType();
-        $methods[$method->getName()] = $type instanceof ReflectionNamedType ? ($type->getName() === 'self' ? Manager::class : $type->getName()) : (string) $type;
+        $name = $type instanceof ReflectionNamedType ? $type->getName() : (string) $type;
+
+        $methods[$method->getName()] = [
+            $name === 'self' ? $class : $name,
+            array_map(static fn (ReflectionParameter $p): string => $p->getName(), $method->getParameters()),
+        ];
     }
 
     ksort($methods);
@@ -49,26 +60,23 @@ function managerMethods(): array
     return $methods;
 }
 
-it('lists every manager method on the facade, with matching return types', function (): void {
-    expect(facadeMethods())->toBe(managerMethods())
-        ->and(managerMethods())->toHaveKeys(['now', 'driver', 'extend']);
+it('documents every manager and fake method on the facade', function (): void {
+    $expected = [...publicMethods(ClorianFake::class), ...publicMethods(Manager::class)];
+    ksort($expected);
+
+    expect(facadeMethods())->toBe($expected)
+        ->and(facadeMethods())->toHaveKeys(['now', 'driver', 'extend', 'answer', 'assertWeighed', 'assertNothingWeighed', 'assertWeighedTimes']);
 });
 
-it('lists every manager parameter on the facade in order', function (): void {
-    $doc = (string) (new ReflectionClass(Clorian::class))->getDocComment();
+it('gives the fake every manager method with the same parameters', function (): void {
+    $fake = publicMethods(ClorianFake::class);
 
-    foreach ((new ReflectionClass(Manager::class))->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
-        if ($method->isConstructor()) {
-            continue;
-        }
-
-        preg_match('/@method\s+static\s+\S+\s+'.$method->getName().'\(([^)]*)\)/', $doc, $match);
-        preg_match_all('/\$(\w+)/', $match[1] ?? '', $documented);
-
-        expect($documented[1])->toBe(array_map(static fn (ReflectionParameter $p): string => $p->getName(), $method->getParameters()));
+    foreach (publicMethods(Manager::class) as $name => [$type, $parameters]) {
+        expect($fake)->toHaveKey($name)
+            ->and($fake[$name][1])->toBe($parameters);
     }
 });
 
-arch('the manager and facade are final')
-    ->expect([Manager::class, Clorian::class])
+arch('the manager, facade and fake are final')
+    ->expect([Manager::class, Clorian::class, ClorianFake::class])
     ->toBeFinal();
