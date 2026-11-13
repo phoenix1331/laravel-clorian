@@ -63,7 +63,7 @@ arch('no insecure functions')->preset()->security();
 /*
  * The decision core is plain PHP so a Symfony bundle can reuse it later.
  * Laravel stays at the edges: provider, policies, models, observer, jobs,
- * commands and the database-backed threshold lookup.
+ * commands and the database-backed threshold lookup (Tuning).
  *
  * One rule per namespace: Pest misses violations when expect() is given
  * several namespaces together with not->toUse().
@@ -93,6 +93,7 @@ foreach ($core as $namespace) {
             'Phoenix1331\Clorian\Jobs',
             'Phoenix1331\Clorian\Commands',
             'Phoenix1331\Clorian\Facades',
+            'Phoenix1331\Clorian\Tuning',
         ]);
 }
 

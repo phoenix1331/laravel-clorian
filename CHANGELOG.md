@@ -16,6 +16,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FakeDriver` for tests and offline demos: `answer()`, `distribution()`, `using()`, `fail()`, recorded `calls()`, even spread for unscripted questions
 - `JevDriver`: scores every question in one `POST /systemone` call, maps booleans to `true`/`false`, records the resolved model version, latency, tokens and request id, trims input to `max_context_tokens` (context first), and turns timeouts, rate limits and error responses into `DriverException`s without the key or the content sent
 - `drivers.jev.max_context_tokens` config key (default 24000) and a `truncated` flag on `Scores`
+- `ThresholdResolver`: turns scores into an `Answer` per question (option, value, confidence, scores, thresholds in force, status), with threshold precedence tuned option, tuned question, policy option, policy question, config default; equality counts as reaching a threshold
+- `ResolvedAnswers` with property access, `accepted()`, `needingReview()`, `withStatus()` and `values(defaults)`, the accepted values over the policy defaults for `apply()`
+- `TunedThresholds` lookup contract, with `EloquentTunedThresholds` reading `clorian_thresholds` in one query and `NoTunedThresholds` for code without a database
 - `DriverException` with a retryable flag, status, request id and `retry-after`
 - `InvalidThresholds`, naming the policy, question and option, for out-of-range or crossed thresholds, 2 to 255 options, duplicate or unknown options and over-long names
 - `Weighing`, `WeighingAnswer` and `TunedThreshold` models with factories, and the `Status`, `ReviewAction` and `WeighingStatus` enums
