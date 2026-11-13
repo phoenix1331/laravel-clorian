@@ -23,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `HasWeighings` trait: `weighings`, `latestWeighing`, `answer(question)`, `weighNow()`, `weighInput()`, `weighPolicy()` and the `pendingReview()` scope (models whose latest weighing has an unreviewed answer in review)
 - Models with `HasWeighings` are weighed when created or when a `#[Weigh]` field changes: queued (`WeighSubject` after the transaction commits, on `clorian.queue`) or inline when `clorian.mode` is `sync`; content already weighed successfully is skipped, and `clorian.enabled` turns it off
 - `WeighSubject` job: 3 tries, backoff of 10 then 60 seconds (or the driver's `retry-after`), permanent driver errors fail at once; after the last attempt the weighing is stored as failed and the policy defaults apply
+- Events `AnswerAccepted`, `AnswerNeedsReview`, `AnswerReviewed` and `WeighingFailed`: ids and scalars only, never the weighed content, dispatched after the surrounding transaction commits
 - `Weighing::accepted(question, value)`: true for an accepted answer, or for the value a human confirmed or corrected
 - `ThresholdResolver`: turns scores into an `Answer` per question (option, value, confidence, scores, thresholds in force, status), with threshold precedence tuned option, tuned question, policy option, policy question, config default; equality counts as reaching a threshold
 - `ResolvedAnswers` with property access, `accepted()`, `needingReview()`, `withStatus()` and `values(defaults)`, the accepted values over the policy defaults for `apply()`

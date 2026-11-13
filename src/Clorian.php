@@ -7,21 +7,27 @@ namespace Phoenix1331\Clorian;
 use Closure;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 use Phoenix1331\Clorian\Drivers\Driver;
 use Phoenix1331\Clorian\Drivers\FakeDriver;
 use Phoenix1331\Clorian\Drivers\JevDriver;
 use Phoenix1331\Clorian\Drivers\Scores;
+use Phoenix1331\Clorian\Events\AnswerAccepted;
+use Phoenix1331\Clorian\Events\AnswerNeedsReview;
+use Phoenix1331\Clorian\Events\WeighingFailed;
 use Phoenix1331\Clorian\Exceptions\DriverException;
 use Phoenix1331\Clorian\Exceptions\InvalidThresholds;
 use Phoenix1331\Clorian\Models\Weighing;
+use Phoenix1331\Clorian\Models\WeighingAnswer;
 use Phoenix1331\Clorian\Models\WeighingStatus;
 use Phoenix1331\Clorian\Policies\Policy;
 use Phoenix1331\Clorian\Policies\PolicyRegistry;
 use Phoenix1331\Clorian\Resolution\Answer;
 use Phoenix1331\Clorian\Resolution\Answers;
 use Phoenix1331\Clorian\Resolution\ResolvedAnswers;
+use Phoenix1331\Clorian\Resolution\Status;
 use Phoenix1331\Clorian\Resolution\ThresholdResolver;
 use Phoenix1331\Clorian\Resolution\TunedThresholds;
 
@@ -43,6 +49,7 @@ final class Clorian
         private readonly Repository $config,
         private readonly PolicyRegistry $policies,
         private readonly TunedThresholds $tuned,
+        private readonly Dispatcher $events,
     ) {}
 
     /**
@@ -90,6 +97,8 @@ final class Clorian
 
         $instance->apply($subject, $resolved->values($this->policies->defaults($instance)));
 
+        $this->announce($weighing, $resolved);
+
         return $weighing;
     }
 
@@ -111,6 +120,8 @@ final class Clorian
         ]);
 
         $instance->apply($subject, new Answers($this->policies->defaults($instance)));
+
+        $this->events->dispatch(new WeighingFailed($weighing->id, $policy, $error, $weighing->subject_type, $weighing->subject_id));
 
         return $weighing;
     }
@@ -198,6 +209,36 @@ final class Clorian
 
             return $weighing;
         });
+    }
+
+    /**
+     * AnswerAccepted and AnswerNeedsReview for each answer; unresolved
+     * answers are only recorded.
+     */
+    private function announce(Weighing $weighing, ResolvedAnswers $resolved): void
+    {
+        $stored = $weighing->answers->keyBy(static fn (WeighingAnswer $answer): string => $answer->question);
+
+        foreach ($resolved->all() as $answer) {
+            $row = $stored->get($answer->question);
+
+            if (! $row instanceof WeighingAnswer || $answer->status === Status::Unresolved) {
+                continue;
+            }
+
+            $event = $answer->status === Status::Accepted ? AnswerAccepted::class : AnswerNeedsReview::class;
+
+            $this->events->dispatch(new $event(
+                $weighing->id,
+                $row->id,
+                $weighing->policy,
+                $answer->question,
+                $answer->value,
+                $answer->confidence,
+                $weighing->subject_type,
+                $weighing->subject_id,
+            ));
+        }
     }
 
     /**
