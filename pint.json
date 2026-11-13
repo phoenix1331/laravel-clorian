@@ -2,5 +2,10 @@
     "preset": "laravel",
     "rules": {
         "declare_strict_types": true
-    }
+    },
+    "exclude": [
+        "test-app",
+        "build",
+        "vendor"
+    ]
 }

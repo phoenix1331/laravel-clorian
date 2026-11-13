@@ -7,6 +7,7 @@
 /build              export-ignore
 /docs               export-ignore
 /examples           export-ignore
+/test-app           export-ignore
 /tests              export-ignore
 /workbench          export-ignore
 /.editorconfig      export-ignore

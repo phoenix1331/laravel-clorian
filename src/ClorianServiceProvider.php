@@ -59,16 +59,16 @@ class ClorianServiceProvider extends ServiceProvider
             __DIR__.'/../database/migrations' => database_path('migrations'),
         ], 'clorian-migrations');
 
-        if ($this->app->runningInConsole()) {
-            $this->commands([
-                AddColumnCommand::class,
-                InstallCommand::class,
-                PingCommand::class,
-                PruneCommand::class,
-                RescanCommand::class,
-                StatsCommand::class,
-                TuneCommand::class,
-            ]);
-        }
+        // Not only in the console: apps call clorian:tune and friends with Artisan::call() from requests.
+        // commands() only queues a callback for when Artisan starts, so this costs nothing per request.
+        $this->commands([
+            AddColumnCommand::class,
+            InstallCommand::class,
+            PingCommand::class,
+            PruneCommand::class,
+            RescanCommand::class,
+            StatsCommand::class,
+            TuneCommand::class,
+        ]);
     }
 }

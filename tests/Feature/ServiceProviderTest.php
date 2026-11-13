@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use Illuminate\Console\Application;
+use Illuminate\Contracts\Console\Kernel;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\ServiceProvider;
 use Phoenix1331\Clorian\Clorian;
@@ -40,4 +42,19 @@ it('publishes the config file under its tag', function (): void {
 
 it('registers the console commands', function (): void {
     expect(array_keys(Artisan::all()))->toContain('clorian:add-column', 'clorian:install', 'clorian:ping', 'clorian:prune', 'clorian:rescan', 'clorian:stats', 'clorian:tune');
+});
+
+it('registers the commands outside the console too, for Artisan::call() from a request', function (): void {
+    $_ENV['APP_RUNNING_IN_CONSOLE'] = $_SERVER['APP_RUNNING_IN_CONSOLE'] = 'false';
+    // Artisan keeps registrations statically; drop this test app's so only the new app's count.
+    Application::forgetBootstrappers();
+
+    try {
+        $app = $this->createApplication();
+
+        expect($app->runningInConsole())->toBeFalse()
+            ->and(array_keys($app->make(Kernel::class)->all()))->toContain('clorian:tune', 'clorian:prune');
+    } finally {
+        unset($_ENV['APP_RUNNING_IN_CONSOLE'], $_SERVER['APP_RUNNING_IN_CONSOLE']);
+    }
 });
