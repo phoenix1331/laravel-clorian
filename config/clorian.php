@@ -91,6 +91,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Calibration
+    |--------------------------------------------------------------------------
+    |
+    | clorian:stats suggests an accept threshold for an option once at least
+    | min_sample reviewed answers at or above it were upheld at the target
+    | rate (0 to 1). Missed answers count against it.
+    |
+    */
+
+    'calibration' => [
+        'target' => 0.95,
+        'min_sample' => 30,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Pruning
     |--------------------------------------------------------------------------
     |
