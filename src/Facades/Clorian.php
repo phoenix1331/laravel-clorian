@@ -13,6 +13,7 @@ use RuntimeException;
 
 /**
  * @method static \Phoenix1331\Clorian\Models\Weighing now(string $policy, string|array<string, mixed> $input, ?\Illuminate\Database\Eloquent\Model $subject = null)
+ * @method static \Phoenix1331\Clorian\Models\WeighingAnswer review(\Phoenix1331\Clorian\Models\WeighingAnswer $answer, \Phoenix1331\Clorian\Reviews\ReviewAction $action, string|bool|null $value, \Illuminate\Contracts\Auth\Authenticatable $by)
  * @method static \Phoenix1331\Clorian\Drivers\Driver driver(?string $name = null)
  * @method static \Phoenix1331\Clorian\Clorian extend(string $name, \Closure $factory)
  * @method static \Phoenix1331\Clorian\Testing\ClorianFake answer(string $question, string|bool $value, float $probability)

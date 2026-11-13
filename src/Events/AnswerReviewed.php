@@ -16,8 +16,8 @@ use Phoenix1331\Clorian\Reviews\ReviewAction;
 final readonly class AnswerReviewed implements ShouldDispatchAfterCommit
 {
     /**
-     * @param  string|null  $value  the option the driver picked
-     * @param  string|null  $reviewedValue  the option the reviewer decided on
+     * @param  string|bool|null  $value  what the driver picked (true/false for a boolean question)
+     * @param  string|bool|null  $reviewedValue  what the reviewer decided; null when marked missed
      */
     public function __construct(
         public int $weighingId,
@@ -25,8 +25,8 @@ final readonly class AnswerReviewed implements ShouldDispatchAfterCommit
         public string $policy,
         public string $question,
         public ReviewAction $action,
-        public ?string $value,
-        public ?string $reviewedValue,
+        public string|bool|null $value,
+        public string|bool|null $reviewedValue,
         public ?string $reviewerType,
         public int|string|null $reviewerId,
         public ?string $subjectType,

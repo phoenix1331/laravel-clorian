@@ -16,6 +16,7 @@ return new class extends Migration
             $table->text('body');
             $table->string('queue')->nullable();
             $table->string('priority')->nullable();
+            $table->boolean('needs_human')->nullable();
             $table->timestamps();
         });
     }

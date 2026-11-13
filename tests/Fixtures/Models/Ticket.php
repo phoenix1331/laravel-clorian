@@ -17,6 +17,7 @@ use Phoenix1331\Clorian\Tests\Fixtures\Policies\TicketTriage;
  * @property string $body
  * @property string|null $queue
  * @property string|null $priority
+ * @property bool|null $needs_human
  */
 #[Weigh(TicketTriage::class, fields: ['subject', 'body'])]
 final class Ticket extends Model
@@ -26,4 +27,12 @@ final class Ticket extends Model
     protected $table = 'tickets';
 
     protected $guarded = ['id'];
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return ['needs_human' => 'boolean'];
+    }
 }

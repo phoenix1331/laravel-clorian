@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Phoenix1331\Clorian;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Config\Repository;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Events\Dispatcher;
@@ -17,14 +18,18 @@ use Phoenix1331\Clorian\Drivers\JevDriver;
 use Phoenix1331\Clorian\Drivers\Scores;
 use Phoenix1331\Clorian\Events\AnswerAccepted;
 use Phoenix1331\Clorian\Events\AnswerNeedsReview;
+use Phoenix1331\Clorian\Events\AnswerReviewed;
 use Phoenix1331\Clorian\Events\WeighingFailed;
 use Phoenix1331\Clorian\Exceptions\DriverException;
+use Phoenix1331\Clorian\Exceptions\InvalidReview;
 use Phoenix1331\Clorian\Exceptions\InvalidThresholds;
 use Phoenix1331\Clorian\Models\Weighing;
 use Phoenix1331\Clorian\Models\WeighingAnswer;
 use Phoenix1331\Clorian\Models\WeighingStatus;
 use Phoenix1331\Clorian\Policies\Policy;
 use Phoenix1331\Clorian\Policies\PolicyRegistry;
+use Phoenix1331\Clorian\Questions\BooleanQuestion;
+use Phoenix1331\Clorian\Questions\Question;
 use Phoenix1331\Clorian\Redaction\InputStorage;
 use Phoenix1331\Clorian\Resolution\Answer;
 use Phoenix1331\Clorian\Resolution\Answers;
@@ -32,6 +37,7 @@ use Phoenix1331\Clorian\Resolution\ResolvedAnswers;
 use Phoenix1331\Clorian\Resolution\Status;
 use Phoenix1331\Clorian\Resolution\ThresholdResolver;
 use Phoenix1331\Clorian\Resolution\TunedThresholds;
+use Phoenix1331\Clorian\Reviews\ReviewAction;
 
 /**
  * Weighs input against a policy: one driver call, every answer resolved
@@ -51,7 +57,6 @@ final class Clorian
         private readonly Repository $config,
         private readonly PolicyRegistry $policies,
         private readonly TunedThresholds $tuned,
-        private readonly Dispatcher $events,
     ) {}
 
     /**
@@ -129,9 +134,56 @@ final class Clorian
 
         $instance->apply($subject, new Answers($this->policies->defaults($instance)));
 
-        $this->events->dispatch(new WeighingFailed($weighing->id, $policy, $error, $weighing->subject_type, $weighing->subject_id));
+        $this->events()->dispatch(new WeighingFailed($weighing->id, $policy, $error, $weighing->subject_type, $weighing->subject_id));
 
         return $weighing;
+    }
+
+    /**
+     * Record a human decision on an answer, then run the policy's apply()
+     * again with every reviewed value in place of what Jev said. Reviewing
+     * again replaces the earlier decision.
+     *
+     * - Upheld: the answer was right; $value is null or the same value.
+     * - Overturned: $value is the right option.
+     * - Missed: no option fits; $value is null and the default applies.
+     *
+     * @param  string|bool|null  $value  an option, or true/false for a boolean question
+     *
+     * @throws InvalidReview when the value does not fit the action or the question
+     * @throws InvalidThresholds when the weighing's policy is no longer valid
+     */
+    public function review(WeighingAnswer $answer, ReviewAction $action, string|bool|null $value, Authenticatable $by): WeighingAnswer
+    {
+        $weighing = $answer->weighing;
+        $instance = $this->policies->get($weighing->policy);
+        $question = $this->policies->questions($instance)[$answer->question] ?? throw InvalidReview::unknownQuestion($weighing->policy, $answer->question);
+
+        $answer->forceFill([
+            'review_action' => $action,
+            'reviewed_value' => self::reviewedOption($question, $answer, $action, $value),
+            'reviewer_type' => $by instanceof Model ? $by->getMorphClass() : $by::class,
+            'reviewer_id' => self::identifier($by),
+            'reviewed_at' => $answer->freshTimestamp(),
+        ])->save();
+
+        $this->reapply($weighing, $instance);
+
+        $this->events()->dispatch(new AnswerReviewed(
+            $weighing->id,
+            $answer->id,
+            $weighing->policy,
+            $answer->question,
+            $action,
+            self::valueOf($question, $answer->value),
+            self::valueOf($question, $answer->reviewed_value),
+            $answer->reviewer_type,
+            $answer->reviewer_id,
+            $weighing->subject_type,
+            $weighing->subject_id,
+        ));
+
+        return $answer;
     }
 
     /**
@@ -182,6 +234,96 @@ final class Clorian
         $this->extensions[$name] = $factory;
 
         return $this;
+    }
+
+    /**
+     * The stored option for a review, checked against the action and the question.
+     *
+     * @throws InvalidReview
+     */
+    private static function reviewedOption(Question $question, WeighingAnswer $answer, ReviewAction $action, string|bool|null $value): ?string
+    {
+        $name = $answer->question;
+        $original = (string) $answer->value;
+        $option = is_bool($value) ? ($value ? BooleanQuestion::TRUE : BooleanQuestion::FALSE) : $value;
+
+        if ($option !== null && ! in_array($option, $question->options(), true)) {
+            throw InvalidReview::notAnOption($name, $option, $question->options());
+        }
+
+        return match ($action) {
+            ReviewAction::Upheld => $option === null || $option === $original ? $original : throw InvalidReview::upheldWithOtherValue($name, $original, $option),
+            ReviewAction::Overturned => match ($option) {
+                null => throw InvalidReview::overturnedWithoutValue($name),
+                $original => throw InvalidReview::overturnedToSameValue($name, $original),
+                default => $option,
+            },
+            ReviewAction::Missed => $option === null ? null : throw InvalidReview::missedWithValue($name),
+        };
+    }
+
+    /**
+     * apply() again for a reviewed weighing: reviewed values first, then
+     * accepted answers, then defaults. Skipped when the subject is gone.
+     */
+    private function reapply(Weighing $weighing, Policy $policy): void
+    {
+        $subject = $weighing->subject;
+
+        if ($weighing->subject_type !== null && ! $subject instanceof Model) {
+            return;
+        }
+
+        $questions = $this->policies->questions($policy);
+        $values = $this->policies->defaults($policy);
+
+        foreach ($weighing->answers()->get() as $answer) {
+            $question = $questions[$answer->question] ?? null;
+
+            if (! $question instanceof Question) {
+                continue;
+            }
+
+            $option = match (true) {
+                $answer->isReviewed() => $answer->reviewed_value,
+                $answer->status === Status::Accepted => $answer->value,
+                default => null,
+            };
+
+            if ($option !== null) {
+                $values[$answer->question] = self::valueOf($question, $option);
+            }
+        }
+
+        $policy->apply($subject, new Answers($values));
+    }
+
+    /**
+     * A stored option as apply() and events see it: true/false for booleans.
+     */
+    private static function valueOf(Question $question, ?string $option): string|bool|null
+    {
+        if ($option === null || ! $question instanceof BooleanQuestion) {
+            return $option;
+        }
+
+        return $option === BooleanQuestion::TRUE;
+    }
+
+    private static function identifier(Authenticatable $by): int|string|null
+    {
+        $id = $by->getAuthIdentifier();
+
+        return is_int($id) || is_string($id) ? $id : null;
+    }
+
+    /**
+     * Resolved per dispatch, not injected: Event::fake() swaps the dispatcher
+     * after this singleton exists.
+     */
+    private function events(): Dispatcher
+    {
+        return $this->container->make(Dispatcher::class);
     }
 
     private function inputStorage(): InputStorage
@@ -277,7 +419,7 @@ final class Clorian
 
             $event = $answer->status === Status::Accepted ? AnswerAccepted::class : AnswerNeedsReview::class;
 
-            $this->events->dispatch(new $event(
+            $this->events()->dispatch(new $event(
                 $weighing->id,
                 $row->id,
                 $weighing->policy,

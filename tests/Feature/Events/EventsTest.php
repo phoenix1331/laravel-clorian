@@ -213,3 +213,13 @@ arch('events never carry models or content objects')
         'Illuminate\Database',
         'Illuminate\Queue\SerializesModels',
     ]);
+
+it('reaches Event::fake() made after the manager was resolved', function (): void {
+    app('clorian');
+    Event::fake(EVENT_CLASSES);
+    app(FakeDriver::class)->answer('intent', 'billing', 0.95);
+
+    Clorian::now(ContactIntent::class, 'Refund please');
+
+    Event::assertDispatched(AnswerAccepted::class);
+});

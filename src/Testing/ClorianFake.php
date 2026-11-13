@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace Phoenix1331\Clorian\Testing;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Database\Eloquent\Model;
 use Phoenix1331\Clorian\Clorian;
 use Phoenix1331\Clorian\Drivers\Driver;
 use Phoenix1331\Clorian\Drivers\FakeDriver;
 use Phoenix1331\Clorian\Models\Weighing;
+use Phoenix1331\Clorian\Models\WeighingAnswer;
 use Phoenix1331\Clorian\Policies\Policy;
+use Phoenix1331\Clorian\Reviews\ReviewAction;
 use PHPUnit\Framework\Assert;
 
 /**
@@ -36,6 +39,11 @@ final class ClorianFake
     public function now(string $policy, string|array $input, ?Model $subject = null): Weighing
     {
         return $this->manager->now($policy, $input, $subject);
+    }
+
+    public function review(WeighingAnswer $answer, ReviewAction $action, string|bool|null $value, Authenticatable $by): WeighingAnswer
+    {
+        return $this->manager->review($answer, $action, $value, $by);
     }
 
     public function driver(?string $name = null): Driver
