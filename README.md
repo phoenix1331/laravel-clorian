@@ -3,7 +3,7 @@
   <img alt="Clorian" src="https://raw.githubusercontent.com/phoenix1331/laravel-clorian/main/docs/images/clorian-logo-dark.webp" width="320">
 </picture>
 
-Clorian is Welsh for scales.
+Clorian (KLOR-yan) is Welsh for scales (as in weighing).
 
 **Confidence-aware typed decisions for Laravel: let Jev make the obvious calls, send the unsure ones to a person, and measure when to trust it more.**
 
