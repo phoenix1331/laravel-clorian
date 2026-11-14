@@ -6,6 +6,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-14
+
 ### Added
 
 - `config/clorian.php` with driver, mode, input storage, default threshold and pruning settings
@@ -50,4 +52,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Jev connection errors are not chained to the HTTP client's exception, which holds the request with the API key and the content
 
-[Unreleased]: https://github.com/phoenix1331/laravel-clorian/commits/main
+[Unreleased]: https://github.com/phoenix1331/laravel-clorian/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/phoenix1331/laravel-clorian/releases/tag/v0.1.0

@@ -37,24 +37,43 @@ A model can read text, but some of its answers will be wrong, and a label alone 
 
 ## Installation
 
-```bash
-composer require phoenix1331/laravel-clorian
-php artisan clorian:install   # publishes config and migrations, asks queued or sync, runs migrate
-```
+Requires PHP 8.3+ and Laravel 12 or 13.
 
-Add your key to `.env`, then check it:
+1. Install the package from [Packagist](https://packagist.org/packages/phoenix1331/laravel-clorian):
 
-```env
-JEV_API_KEY=                       # your TypeSafe API key
-JEV_MODEL=jev-latest               # pin the version clorian:ping reports, e.g. jev-1.14.0
-CLORIAN_MODE=queued                # queued (in a job after the save) or sync (during the save)
-```
+   ```bash
+   composer require phoenix1331/laravel-clorian
+   ```
 
-```bash
-php artisan clorian:ping
-```
+2. Publish the config and migrations. The installer asks whether to weigh models queued or sync, then runs `migrate`:
 
-Pin `JEV_MODEL` to the version `clorian:ping` reports: `jev-latest` moves without notice, which shifts confidences and invalidates calibration.
+   ```bash
+   php artisan clorian:install
+   ```
+
+3. Add your TypeSafe key to `.env`:
+
+   ```env
+   JEV_API_KEY=                       # your TypeSafe API key
+   JEV_MODEL=jev-latest               # pin the version clorian:ping reports, e.g. jev-1.14.0
+   CLORIAN_MODE=queued                # queued (in a job after the save) or sync (during the save)
+   ```
+
+4. Check the key with one sample call, then pin `JEV_MODEL` to the version it reports: `jev-latest` moves without notice, which shifts confidences and invalidates calibration.
+
+   ```bash
+   php artisan clorian:ping
+   ```
+
+5. In queued mode, run a queue worker as you would for any queued job:
+
+   ```bash
+   php artisan queue:work
+   ```
+
+Then add `#[Weigh]` and `HasWeighings` to a model and write its policy, as in [Usage](#usage). To try it without a key, set `CLORIAN_DRIVER=fake`.
+
+Clorian is pre-1.0, so Composer pins `^0.1` and a minor release may include breaking changes. Read the [changelog](https://github.com/phoenix1331/laravel-clorian/blob/main/CHANGELOG.md) before upgrading.
 
 ## How it works
 

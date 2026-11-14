@@ -204,7 +204,7 @@
           <code id="install-cmd">composer require phoenix1331/laravel-clorian</code>
           <button type="button" id="copy">Copy</button>
         </div>
-        <p class="soft" style="margin-top:1rem">PHP 8.3+, Laravel 12 or 13. Headless: bring your own UI.</p>
+        <p class="soft" style="margin-top:1rem">v0.1.0 on <a href="https://packagist.org/packages/phoenix1331/laravel-clorian">Packagist</a>. PHP 8.3+, Laravel 12 or 13. Headless: bring your own UI.</p>
       </div>
 
       <div class="scale" aria-labelledby="scale-title">
@@ -405,15 +405,19 @@ $tickets = Ticket::pendingReview()->with(<span class="s">'latestWeighing.answers
   <section id="quick-start">
     <div class="wrap">
       <h2>Quick start</h2>
+      <p>Requires PHP 8.3+ and Laravel 12 or 13. Install from <a href="https://packagist.org/packages/phoenix1331/laravel-clorian">Packagist</a>, then publish the config and migrations; the installer asks whether to weigh models queued or sync, and runs <code>migrate</code>:</p>
       <pre><code>composer require phoenix1331/laravel-clorian
-php artisan clorian:install   <span class="c"># publishes config and migrations, asks queued or sync, runs migrate</span>
-php artisan clorian:ping      <span class="c"># checks your key with one sample call</span></code></pre>
-      <p>Add your key to <code>.env</code>, and pin the model to the version <code>clorian:ping</code> reports, so confidences stay comparable:</p>
+php artisan clorian:install</code></pre>
+      <p>Add your TypeSafe key to <code>.env</code>:</p>
       <pre><code>JEV_API_KEY=...                    <span class="c"># your TypeSafe API key</span>
-JEV_MODEL=jev-1.14.0               <span class="c"># pin the version clorian:ping reports</span>
+JEV_MODEL=jev-latest               <span class="c"># then pin the version clorian:ping reports</span>
 CLORIAN_DRIVER=jev                 <span class="c"># jev, or fake to work offline</span>
 CLORIAN_MODE=queued                <span class="c"># queued (in a job after the save) or sync (during the save)</span>
 CLORIAN_STORE_INPUT=subjectless    <span class="c"># none, subjectless or always</span></code></pre>
+      <p>Check the key with one sample call, pin <code>JEV_MODEL</code> to the version it reports so confidences stay comparable, and in queued mode run a worker as you would for any queued job:</p>
+      <pre><code>php artisan clorian:ping
+php artisan queue:work</code></pre>
+      <p class="soft">Clorian is pre-1.0, so Composer pins <code>^0.1</code> and a minor release may include breaking changes. Read the <a href="https://github.com/phoenix1331/laravel-clorian/blob/main/CHANGELOG.md">changelog</a> before upgrading.</p>
       <p>Mark a model with the policy that weighs it and the fields to send. It is weighed when created, and again when one of those fields changes:</p>
       <pre><code><span class="k">use</span> Phoenix1331\Clorian\Attributes\Weigh;
 <span class="k">use</span> Phoenix1331\Clorian\Concerns\HasWeighings;
